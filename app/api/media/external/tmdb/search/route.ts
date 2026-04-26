@@ -1,73 +1,105 @@
-import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  getBestSpotifyImage,
+  getSpotifyArtistAlbums,
+  searchSpotifyAlbums,
+  searchSpotifyArtists,
+  type SpotifyAlbum,
+  type SpotifyArtist,
+} from "@/lib/spotify";
 
-type TmdbSearchType = "movie" | "tv" | "multi";
-type SearchBy = "title" | "person";
+type SearchResult = {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  source: string;
+  href: string;
+  coverUrl: string | null;
+  provider?: string | null;
+  externalId?: string | null;
+  rank: number;
+};
 
-type TmdbResult = {
-  id: number;
-  media_type?: "movie" | "tv" | "person";
-  title?: string;
-  name?: string;
-  overview?: string;
-  release_date?: string;
-  first_air_date?: string;
-  poster_path?: string | null;
-  backdrop_path?: string | null;
-  original_language?: string;
+type QueryProfile = {
+  likelyMusicArtist: boolean;
+  likelyFilmTvPerson: boolean;
+  likelyAuthor: boolean;
+  likelyGameQuery: boolean;
+  likelyTitleQuery: boolean;
+};
+
+type SpotifyAlbumResult = {
+  provider: "SPOTIFY";
+  externalId: string;
+  type: "ALBUM";
+  title: string;
+  description: string | null;
+  releaseDate: string | null;
+  coverUrl: string | null;
+  artists?: string[];
+  primaryArtistName?: string | null;
+  totalTracks?: number | null;
+  albumType?: string | null;
+  spotifyPopularity?: number | null;
+  spotifyArtistFollowers?: number | null;
+};
+
+type TmdbMediaResult = {
+  provider: "TMDB";
+  externalId: string;
+  type: "MOVIE" | "SHOW";
+  title: string;
+  description: string | null;
+  releaseDate: string | null;
+  coverUrl: string | null;
+  backdropUrl: string | null;
+  languageCode: string | null;
   popularity?: number;
-  vote_count?: number;
-  vote_average?: number;
-  video?: boolean;
+  voteCount?: number;
+  voteAverage?: number;
+  creditScore?: number;
+  creditReason?: string | null;
 };
 
-type ScoredTmdbResult = TmdbResult & {
-  _creditScore?: number;
-  _creditReason?: string;
+type GoogleBookResult = {
+  provider: "GOOGLE_BOOKS";
+  externalId: string;
+  type: "BOOK";
+  title: string;
+  description: string | null;
+  releaseDate: string | null;
+  coverUrl: string | null;
+  authors?: string[];
+  pageCount?: number | null;
+  averageRating?: number | null;
+  ratingsCount?: number | null;
+  isbn13?: string | null;
 };
 
-type TmdbPersonResult = {
-  id: number;
-  name?: string;
-  known_for_department?: string;
-  popularity?: number;
-  known_for?: TmdbResult[];
+type CombinedGoogleBookResult = GoogleBookResult & {
+  _combinedTitlePart?: string;
+  _combinedCreatorPart?: string;
 };
 
-type TmdbPersonSearchResponse = {
-  results?: TmdbPersonResult[];
+type RawgGameResult = {
+  provider: "RAWG";
+  externalId: string;
+  type: "GAME";
+  title: string;
+  description: string | null;
+  releaseDate: string | null;
+  coverUrl: string | null;
+  backdropUrl: string | null;
+  platforms?: string[];
+  genres?: string[];
+  rating?: number | null;
+  ratingsCount?: number | null;
+  metacritic?: number | null;
+  added?: number | null;
+  playtime?: number | null;
 };
-
-type TmdbSearchResponse = {
-  results?: TmdbResult[];
-};
-
-type TmdbCreditsResponse = {
-  cast?: Array<
-    TmdbResult & {
-      character?: string;
-      order?: number;
-    }
-  >;
-  crew?: Array<
-    TmdbResult & {
-      job?: string;
-      department?: string;
-    }
-  >;
-};
-
-function normalizeSearchType(value: string | null): TmdbSearchType {
-  if (value === "movie" || value === "tv" || value === "multi") {
-    return value;
-  }
-
-  return "multi";
-}
-
-function normalizeSearchBy(value: string | null): SearchBy {
-  if (value === "person") return "person";
-  return "title";
-}
 
 function normalizeText(value: string | null | undefined) {
   return (value || "")
@@ -80,224 +112,465 @@ function normalizeText(value: string | null | undefined) {
     .replace(/\s+/g, " ");
 }
 
-function getEndpoint(type: TmdbSearchType) {
-  if (type === "movie") return "search/movie";
-  if (type === "tv") return "search/tv";
-  return "search/multi";
-}
+function yearFromDate(value: string | Date | null | undefined) {
+  if (!value) return null;
 
-function getKind(item: TmdbResult, type: TmdbSearchType) {
-  return item.media_type ?? type;
-}
+  const date = new Date(value);
 
-function getImageBase() {
-  return process.env.TMDB_IMAGE_BASE_URL ?? "https://image.tmdb.org/t/p/w500";
-}
-
-async function tmdbFetch<T>(path: string, params: Record<string, string>) {
-  const token = process.env.TMDB_ACCESS_TOKEN;
-
-  if (!token) {
-    throw new Error("TMDB_ACCESS_TOKEN is missing.");
+  if (Number.isNaN(date.getTime())) {
+    return String(value).slice(0, 4);
   }
 
-  const url = new URL(`https://api.themoviedb.org/3/${path}`);
-
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
-  }
-
-  const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      accept: "application/json",
-    },
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    throw new Error(
-      `TMDB request failed with status ${response.status}${
-        body ? ` - ${body}` : ""
-      }`
-    );
-  }
-
-  return response.json() as Promise<T>;
+  return String(date.getFullYear());
 }
 
-function getCrewCreditScore(item: {
-  job?: string;
-  department?: string;
+function mediaSubtitle(media: {
+  type: string;
+  releaseDate: Date | null;
+  description: string | null;
 }) {
-  const job = normalizeText(item.job);
-  const department = normalizeText(item.department);
+  const parts: string[] = [media.type];
 
-  if (job === "director") return { score: 2600, reason: "Director" };
-  if (job === "creator") return { score: 2600, reason: "Creator" };
-  if (job === "writer") return { score: 2300, reason: "Writer" };
-  if (job === "screenplay") return { score: 2300, reason: "Screenplay" };
-  if (job === "story") return { score: 2100, reason: "Story" };
-  if (job === "characters") return { score: 1900, reason: "Characters" };
+  const year = yearFromDate(media.releaseDate);
+  if (year) parts.push(year);
 
-  if (department === "directing") {
-    return { score: 1800, reason: item.job || "Directing" };
+  if (media.description) {
+    parts.push(media.description.slice(0, 120));
   }
 
-  if (department === "writing") {
-    return { score: 1700, reason: item.job || "Writing" };
-  }
-
-  if (department === "production") {
-    return { score: 500, reason: item.job || "Production" };
-  }
-
-  return { score: 300, reason: item.job || item.department || "Crew" };
+  return parts.join(" · ");
 }
 
-function getCastCreditScore(item: {
-  character?: string;
-  order?: number;
-}) {
-  const order = item.order ?? 999;
-  const character = item.character?.trim();
+function getBaseUrl(request: NextRequest) {
+  const protocol = request.headers.get("x-forwarded-proto") || "http";
+  const host = request.headers.get("host");
 
-  if (order <= 2) {
-    return {
-      score: 1400,
-      reason: character ? `Cast: ${character}` : "Cast",
-    };
+  if (!host) {
+    throw new Error("Missing request host.");
   }
 
-  if (order <= 8) {
-    return {
-      score: 1100,
-      reason: character ? `Cast: ${character}` : "Cast",
-    };
-  }
-
-  return {
-    score: 700,
-    reason: character ? `Cast: ${character}` : "Cast",
-  };
+  return `${protocol}://${host}`;
 }
 
-function isUsefulCrewCredit(item: {
-  job?: string;
-  department?: string;
-}) {
-  const job = normalizeText(item.job);
-  const department = normalizeText(item.department);
+async function fetchJsonArray<T>(url: URL, resultKey?: string) {
+  try {
+    const res = await fetch(url.toString(), {
+      cache: "no-store",
+    });
 
-  return (
-    job === "director" ||
-    job === "creator" ||
-    job === "screenplay" ||
-    job === "writer" ||
-    job === "story" ||
-    job === "characters" ||
-    department === "directing" ||
-    department === "writing"
+    if (!res.ok) {
+      return [];
+    }
+
+    const data = await res.json();
+
+    if (resultKey) {
+      return Array.isArray(data?.[resultKey]) ? (data[resultKey] as T[]) : [];
+    }
+
+    return Array.isArray(data) ? (data as T[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function spotifyAlbumKey(album: SpotifyAlbum) {
+  return normalizeText(
+    `${album.name}:${album.artists.map((artist) => artist.name).join(",")}`
   );
 }
 
-function shouldDropLowValuePersonCredit(item: ScoredTmdbResult) {
-  const creditReason = normalizeText(item._creditReason);
-  const voteCount = item.vote_count ?? 0;
-  const popularity = item.popularity ?? 0;
-  const title = normalizeText(item.title || item.name);
-  const overview = normalizeText(item.overview);
-
-  if (creditReason.includes("cast: self")) return true;
-  if (creditReason.includes("archive footage")) return true;
-
-  if (overview.includes("talk show")) return true;
-  if (overview.includes("late night")) return true;
-  if (overview.includes("reality")) return true;
-  if (overview.includes("variety show")) return true;
-
-  if (title.includes("late night")) return true;
-  if (title.includes("jimmy kimmel")) return true;
-  if (title.includes("ellen degeneres")) return true;
-
-  const isMinorCast =
-    creditReason.includes("cast:") && (item._creditScore ?? 0) < 900;
-
-  if (isMinorCast && voteCount < 500 && popularity < 5) return true;
-
-  return false;
-}
-
-function toMediaResult(item: TmdbResult, type: TmdbSearchType) {
-  const imageBase = getImageBase();
-  const kind = getKind(item, type);
-  const isMovie = kind === "movie";
-
-  if (kind !== "movie" && kind !== "tv") {
-    return null;
-  }
-
-  const scoredItem = item as ScoredTmdbResult;
-
-  return {
-    provider: "TMDB",
-    externalId: String(item.id),
-    type: isMovie ? "MOVIE" : "SHOW",
-    title: isMovie ? item.title ?? "Untitled Movie" : item.name ?? "Untitled Show",
-    description: item.overview ?? null,
-    releaseDate: isMovie
-      ? item.release_date ?? null
-      : item.first_air_date ?? null,
-    coverUrl: item.poster_path ? `${imageBase}${item.poster_path}` : null,
-    backdropUrl: item.backdrop_path ? `${imageBase}${item.backdrop_path}` : null,
-    languageCode: item.original_language ?? null,
-    popularity: item.popularity ?? 0,
-    voteCount: item.vote_count ?? 0,
-    voteAverage: item.vote_average ?? 0,
-    creditScore: scoredItem._creditScore ?? 0,
-    creditReason: scoredItem._creditReason ?? null,
-    raw: item,
-  };
-}
-
-function scoreTitleResult(item: TmdbResult, query: string) {
+function getSpotifyArtistScore(query: string, artist: SpotifyArtist) {
   const q = normalizeText(query);
-  const title = normalizeText(item.title || item.name);
-  const voteCount = item.vote_count ?? 0;
-  const popularity = item.popularity ?? 0;
-  const voteAverage = item.vote_average ?? 0;
+  const name = normalizeText(artist.name);
 
-  let score = 0;
+  let score = artist.popularity ?? 0;
 
-  if (title === q) score += 3000;
-  else if (title.startsWith(q)) score += 1200;
-  else if (title.includes(q)) score += 700;
+  score += Math.log10((artist.followers?.total ?? 0) + 1) * 12;
 
-  score += Math.log10(voteCount + 1) * 420;
-  score += Math.log10(popularity + 1) * 180;
-
-  if (voteAverage >= 7 && voteCount >= 500) score += 120;
-  if (voteAverage >= 8 && voteCount >= 1000) score += 180;
-  if (voteCount >= 1000) score += 300;
-  if (voteCount >= 3000) score += 350;
-  if (voteCount >= 8000) score += 450;
-
-  if (item.video) score -= 700;
+  if (name === q) score += 1000;
+  else if (name.startsWith(q)) score += 300;
+  else if (name.includes(q)) score += 120;
 
   return score;
 }
 
-function scorePersonWork(item: ScoredTmdbResult) {
-  const voteCount = item.vote_count ?? 0;
+function toSpotifyAlbumResult(
+  album: SpotifyAlbum,
+  searchedArtist?: SpotifyArtist
+): SpotifyAlbumResult {
+  const primaryArtist = album.artists[0];
+
+  return {
+    provider: "SPOTIFY",
+    externalId: album.id,
+    type: "ALBUM",
+    title: album.name,
+    description: primaryArtist
+      ? `Album by ${album.artists.map((artist) => artist.name).join(", ")}`
+      : null,
+    releaseDate: album.release_date || null,
+    coverUrl: getBestSpotifyImage(album.images),
+    artists: album.artists.map((artist) => artist.name),
+    primaryArtistName: primaryArtist?.name ?? null,
+    totalTracks: album.total_tracks ?? null,
+    albumType: album.album_type,
+    spotifyPopularity: searchedArtist?.popularity ?? null,
+    spotifyArtistFollowers: searchedArtist?.followers?.total ?? null,
+  };
+}
+
+async function fetchSpotifyAlbums(
+  _request: NextRequest,
+  query: string,
+  searchBy: "artist" | "album"
+) {
+  try {
+    if (searchBy === "album") {
+      const albums = await searchSpotifyAlbums(query);
+      const seen = new Set<string>();
+
+      return albums
+        .filter((album) => album.id && album.name)
+        .filter((album) => {
+          const key = spotifyAlbumKey(album);
+
+          if (seen.has(key)) return false;
+
+          seen.add(key);
+          return true;
+        })
+        .map((album) => toSpotifyAlbumResult(album));
+    }
+
+    const artists = await searchSpotifyArtists(query);
+
+    const bestArtist = artists
+      .filter((artist) => artist.id && artist.name)
+      .sort(
+        (a, b) =>
+          getSpotifyArtistScore(query, b) - getSpotifyArtistScore(query, a)
+      )[0];
+
+    if (!bestArtist) return [];
+
+    const albums = await getSpotifyArtistAlbums(bestArtist.id);
+    const seen = new Set<string>();
+
+    return albums
+      .filter((album) => album.id && album.name)
+      .filter((album) => album.album_type === "album")
+      .filter((album) => {
+        const key = spotifyAlbumKey(album);
+
+        if (seen.has(key)) return false;
+
+        seen.add(key);
+        return true;
+      })
+      .map((album) => toSpotifyAlbumResult(album, bestArtist));
+  } catch (error) {
+    console.error("Spotify universal search failed:", error);
+    return [];
+  }
+}
+
+async function fetchTmdbPersonWorks(
+  request: NextRequest,
+  query: string,
+  type: "movie" | "tv"
+) {
+  const baseUrl = getBaseUrl(request);
+  const url = new URL("/api/media/external/tmdb/search", baseUrl);
+
+  url.searchParams.set("q", query);
+  url.searchParams.set("type", type);
+  url.searchParams.set("searchBy", "person");
+
+  return fetchJsonArray<TmdbMediaResult>(url);
+}
+
+async function fetchTmdbTitleResults(
+  request: NextRequest,
+  query: string,
+  type: "movie" | "tv"
+) {
+  const baseUrl = getBaseUrl(request);
+  const url = new URL("/api/media/external/tmdb/search", baseUrl);
+
+  url.searchParams.set("q", query);
+  url.searchParams.set("type", type);
+  url.searchParams.set("searchBy", "title");
+
+  return fetchJsonArray<TmdbMediaResult>(url);
+}
+
+async function fetchGoogleBooks(
+  request: NextRequest,
+  query: string,
+  searchBy: "title" | "author"
+) {
+  const baseUrl = getBaseUrl(request);
+  const url = new URL("/api/media/external/books/search", baseUrl);
+
+  url.searchParams.set("q", query);
+  url.searchParams.set("searchBy", searchBy);
+
+  return fetchJsonArray<GoogleBookResult>(url, "results");
+}
+
+function getCombinedQueryParts(query: string) {
+  const words = normalizeText(query).split(" ").filter(Boolean);
+
+  if (words.length < 3) return [];
+
+  const parts: Array<{ titlePart: string; creatorPart: string }> = [];
+
+  for (let splitIndex = 1; splitIndex < words.length; splitIndex += 1) {
+    const titlePart = words.slice(0, splitIndex).join(" ");
+    const creatorPart = words.slice(splitIndex).join(" ");
+
+    if (titlePart.length >= 2 && creatorPart.length >= 4) {
+      parts.push({ titlePart, creatorPart });
+    }
+  }
+
+  return parts;
+}
+
+async function fetchCombinedBookResults(request: NextRequest, query: string) {
+  const parts = getCombinedQueryParts(query);
+
+  if (parts.length === 0) return [];
+
+  const allResults: CombinedGoogleBookResult[] = [];
+  const seen = new Set<string>();
+
+  for (const part of parts) {
+    const [titleResults, authorResults] = await Promise.all([
+      fetchGoogleBooks(request, part.titlePart, "title"),
+      fetchGoogleBooks(request, part.creatorPart, "author"),
+    ]);
+
+    const combinedMatches = [...titleResults, ...authorResults].filter(
+      (item) => {
+        const title = normalizeText(item.title);
+        const authors = normalizeText((item.authors || []).join(" "));
+        const titlePart = normalizeText(part.titlePart);
+        const creatorPart = normalizeText(part.creatorPart);
+
+        return title.includes(titlePart) && authors.includes(creatorPart);
+      }
+    );
+
+    for (const item of combinedMatches) {
+      const key = `${item.externalId}:${part.titlePart}:${part.creatorPart}`;
+
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+
+      allResults.push({
+        ...item,
+        _combinedTitlePart: part.titlePart,
+        _combinedCreatorPart: part.creatorPart,
+      });
+    }
+  }
+
+  return allResults;
+}
+
+async function fetchRawgGames(request: NextRequest, query: string) {
+  const baseUrl = getBaseUrl(request);
+  const url = new URL("/api/media/external/rawg/search", baseUrl);
+
+  url.searchParams.set("q", query);
+
+  return fetchJsonArray<RawgGameResult>(url, "results");
+}
+
+function getQueryMatchScore({
+  query,
+  title,
+  creators,
+}: {
+  query: string;
+  title: string;
+  creators?: string[];
+}) {
+  const q = normalizeText(query);
+  const normalizedTitle = normalizeText(title);
+  const creatorText = normalizeText((creators || []).join(" "));
+
+  let score = 0;
+
+  if (normalizedTitle === q) score += 1000;
+  else if (normalizedTitle.startsWith(q)) score += 500;
+  else if (normalizedTitle.includes(q)) score += 250;
+
+  if (creatorText === q) score += 1400;
+  else if (creatorText.includes(q)) score += 700;
+
+  return score;
+}
+
+function isStrongQueryMatch({
+  query,
+  title,
+  creators = [],
+}: {
+  query: string;
+  title: string;
+  creators?: string[];
+}) {
+  const q = normalizeText(query);
+  const normalizedTitle = normalizeText(title);
+  const normalizedCreators = creators.map((creator) => normalizeText(creator));
+  const creatorText = normalizeText(creators.join(" "));
+
+  if (!q) return false;
+
+  if (normalizedTitle === q) return true;
+  if (normalizedTitle.includes(q)) return true;
+  if (normalizedCreators.some((creator) => creator === q)) return true;
+  if (creatorText.includes(q)) return true;
+
+  const words = q.split(" ").filter((word) => word.length > 2);
+
+  if (words.length <= 1) {
+    return normalizedTitle.includes(q) || creatorText.includes(q);
+  }
+
+  return words.every((word) => normalizedTitle.includes(word));
+}
+
+function isWeakSingleWordLeak(query: string, title: string) {
+  const q = normalizeText(query);
+  const normalizedTitle = normalizeText(title);
+  const queryWords = q.split(" ").filter((word) => word.length > 2);
+
+  if (queryWords.length <= 1) return false;
+
+  const matchedWords = queryWords.filter((word) =>
+    normalizedTitle.includes(word)
+  );
+
+  return matchedWords.length > 0 && matchedWords.length < queryWords.length;
+}
+
+function isSingleWordQuery(query: string) {
+  return normalizeText(query).split(" ").filter(Boolean).length === 1;
+}
+
+function isExactTitle(itemTitle: string, query: string) {
+  return normalizeText(itemTitle) === normalizeText(query);
+}
+
+function shouldUseSpotifyArtistLane(
+  query: string,
+  spotifyArtistAlbums: SpotifyAlbumResult[]
+) {
+  const q = normalizeText(query);
+  const words = q.split(" ").filter(Boolean);
+
+  const exactArtistAlbums = spotifyArtistAlbums.filter((item) =>
+    isExactSpotifyArtist(item, query)
+  );
+
+  if (exactArtistAlbums.length === 0) return false;
+
+  if (words.length >= 2) return true;
+
+  const strongestArtistPopularity = Math.max(
+    ...exactArtistAlbums.map((item) => item.spotifyPopularity ?? 0),
+    0
+  );
+
+  const strongestFollowers = Math.max(
+    ...exactArtistAlbums.map((item) => item.spotifyArtistFollowers ?? 0),
+    0
+  );
+
+  return strongestArtistPopularity >= 40 || strongestFollowers >= 50_000;
+}
+
+function looksLikeTitleQuery(query: string) {
+  const words = normalizeText(query).split(" ").filter(Boolean);
+  const firstWord = words[0];
+
+  return firstWord === "the" || firstWord === "a" || firstWord === "an";
+}
+
+function getRecencyScore(value: string | Date | null | undefined) {
+  if (!value) return 0;
+
+  const year =
+    value instanceof Date
+      ? value.getFullYear()
+      : Number(String(value).slice(0, 4));
+
+  if (Number.isNaN(year)) return 0;
+
+  if (year > 2028) return -250;
+  if (year >= 2020) return 40;
+  if (year >= 1990) return 60;
+  if (year >= 1960) return 40;
+
+  return 0;
+}
+
+function logarithmicPopularity(
+  value: number | null | undefined,
+  multiplier: number
+) {
+  const safeValue = Math.max(0, value ?? 0);
+  return Math.log10(safeValue + 1) * multiplier;
+}
+
+function getBadTextPenalty(value: string | null | undefined) {
+  const text = normalizeText(value);
+
+  let penalty = 0;
+
+  if (text.includes("tribute")) penalty -= 1000;
+  if (text.includes("tributes")) penalty -= 1000;
+  if (text.includes("lullaby")) penalty -= 900;
+  if (text.includes("rendition")) penalty -= 800;
+  if (text.includes("karaoke")) penalty -= 900;
+  if (text.includes("smooth jazz")) penalty -= 900;
+  if (text.includes("smooth sax")) penalty -= 900;
+  if (text.includes("string quartet")) penalty -= 850;
+  if (text.includes("piano tribute")) penalty -= 850;
+  if (text.includes("8 bit")) penalty -= 700;
+  if (text.includes("8bit")) penalty -= 700;
+  if (text.includes("cover band")) penalty -= 700;
+
+  if (text.includes("calendar")) penalty -= 650;
+  if (text.includes("unauthorized")) penalty -= 350;
+  if (text.includes("interview")) penalty -= 450;
+  if (text.includes("documentary")) penalty -= 300;
+
+  if (text.includes("talk show")) penalty -= 1400;
+  if (text.includes("late night")) penalty -= 1300;
+  if (text.includes("reality")) penalty -= 1000;
+  if (text.includes("variety show")) penalty -= 1000;
+  if (text.includes("sketch comedy")) penalty -= 650;
+  if (text.includes("celebrity")) penalty -= 600;
+  if (text.includes("archive footage")) penalty -= 600;
+
+  return penalty;
+}
+
+function getTmdbPopularityScore(item: TmdbMediaResult) {
+  const voteCount = item.voteCount ?? 0;
   const popularity = item.popularity ?? 0;
-  const voteAverage = item.vote_average ?? 0;
-  const creditScore = item._creditScore ?? 0;
+  const voteAverage = item.voteAverage ?? 0;
 
-  let score = creditScore;
+  let score = 0;
 
-  score += Math.log10(voteCount + 1) * 420;
-  score += Math.log10(popularity + 1) * 180;
+  score += logarithmicPopularity(voteCount, 420);
+  score += logarithmicPopularity(popularity, 180);
 
   if (voteAverage >= 7 && voteCount >= 500) score += 120;
   if (voteAverage >= 8 && voteCount >= 1000) score += 180;
@@ -305,168 +578,955 @@ function scorePersonWork(item: ScoredTmdbResult) {
   if (voteCount >= 3000) score += 350;
   if (voteCount >= 8000) score += 450;
 
-  if (item.video) score -= 600;
+  return score;
+}
 
-  if (shouldDropLowValuePersonCredit(item)) {
+function getBookPopularityScore(item: GoogleBookResult) {
+  const rating = item.averageRating ?? 0;
+  const count = item.ratingsCount ?? 0;
+  const pageCount = item.pageCount ?? 0;
+
+  let score = 0;
+
+  score += logarithmicPopularity(count, 260);
+
+  if (rating > 0) score += rating * 35;
+  if (pageCount >= 80) score += 70;
+  if (pageCount >= 180) score += 50;
+  if (count >= 25 && rating >= 4) score += 250;
+  if (count >= 100 && rating >= 4) score += 250;
+
+  return score;
+}
+
+function getGamePopularityScore(item: RawgGameResult) {
+  const rating = item.rating ?? 0;
+  const ratingsCount = item.ratingsCount ?? 0;
+  const added = item.added ?? 0;
+  const metacritic = item.metacritic ?? 0;
+
+  let score = 0;
+
+  score += logarithmicPopularity(ratingsCount, 300);
+  score += logarithmicPopularity(added, 220);
+
+  if (rating > 0) score += rating * 45;
+  if (metacritic > 0) score += metacritic * 3;
+  if (ratingsCount >= 500) score += 250;
+  if (ratingsCount >= 2000) score += 350;
+  if (added >= 5000) score += 250;
+
+  return score;
+}
+
+function isExactSpotifyArtist(item: SpotifyAlbumResult, query: string) {
+  return (item.artists || []).some(
+    (artist) => normalizeText(artist) === normalizeText(query)
+  );
+}
+
+function isExactAuthor(item: GoogleBookResult, query: string) {
+  return (item.authors || []).some(
+    (author) => normalizeText(author) === normalizeText(query)
+  );
+}
+
+function hasStrongMusicArtistSignal(items: SpotifyAlbumResult[], query: string) {
+  return shouldUseSpotifyArtistLane(query, items);
+}
+
+function hasStrongAuthorSignal(items: GoogleBookResult[], query: string) {
+  const exactAuthorBooks = items.filter((item) => isExactAuthor(item, query));
+
+  return exactAuthorBooks.some((item) => {
+    const ratingsCount = item.ratingsCount ?? 0;
+    const pageCount = item.pageCount ?? 0;
+
+    return ratingsCount >= 10 || pageCount >= 120;
+  });
+}
+
+function hasStrongGameSignal(items: RawgGameResult[], query: string) {
+  return items.some((item) => {
+    const title = normalizeText(item.title);
+    const q = normalizeText(query);
+    const ratingsCount = item.ratingsCount ?? 0;
+    const added = item.added ?? 0;
+
+    return (
+      (title === q || title.includes(q)) &&
+      (ratingsCount >= 100 || added >= 1000)
+    );
+  });
+}
+
+function hasStrongTmdbCreatorWork(items: TmdbMediaResult[]) {
+  return items.some((item) => {
+    const creditScore = item.creditScore ?? 0;
+    const voteCount = item.voteCount ?? 0;
+    const popularity = item.popularity ?? 0;
+    const creditReason = normalizeText(item.creditReason);
+
+    const majorCreativeCredit =
+      creditScore >= 2100 ||
+      creditReason.includes("director") ||
+      creditReason.includes("creator") ||
+      creditReason.includes("writer") ||
+      creditReason.includes("screenplay");
+
+    return majorCreativeCredit && (voteCount >= 500 || popularity >= 5);
+  });
+}
+
+function hasStrongTmdbActingWork(items: TmdbMediaResult[]) {
+  return items.some((item) => {
+    const creditScore = item.creditScore ?? 0;
+    const voteCount = item.voteCount ?? 0;
+    const popularity = item.popularity ?? 0;
+    const creditReason = normalizeText(item.creditReason);
+
+    const majorActingCredit =
+      creditScore >= 900 || creditReason.includes("cast:");
+
+    return majorActingCredit && (voteCount >= 1000 || popularity >= 8);
+  });
+}
+
+function hasStrongTitleResult({
+  query,
+  spotifyAlbumResults,
+  bookTitleResults,
+  tmdbTitleMovies,
+  tmdbTitleShows,
+  rawgGames,
+}: {
+  query: string;
+  spotifyAlbumResults: SpotifyAlbumResult[];
+  bookTitleResults: GoogleBookResult[];
+  tmdbTitleMovies: TmdbMediaResult[];
+  tmdbTitleShows: TmdbMediaResult[];
+  rawgGames: RawgGameResult[];
+}) {
+  const q = normalizeText(query);
+
+  return (
+    bookTitleResults.some((item) => normalizeText(item.title) === q) ||
+    [...tmdbTitleMovies, ...tmdbTitleShows].some(
+      (item) => normalizeText(item.title) === q
+    ) ||
+    rawgGames.some((item) => normalizeText(item.title) === q) ||
+    spotifyAlbumResults.some((item) => normalizeText(item.title) === q)
+  );
+}
+
+function getQueryProfile({
+  query,
+  spotifyArtistAlbums,
+  spotifyAlbumResults,
+  bookAuthorResults,
+  bookTitleResults,
+  rawgGames,
+  tmdbPersonMovies,
+  tmdbPersonShows,
+  tmdbTitleMovies,
+  tmdbTitleShows,
+}: {
+  query: string;
+  spotifyArtistAlbums: SpotifyAlbumResult[];
+  spotifyAlbumResults: SpotifyAlbumResult[];
+  bookAuthorResults: GoogleBookResult[];
+  bookTitleResults: GoogleBookResult[];
+  rawgGames: RawgGameResult[];
+  tmdbPersonMovies: TmdbMediaResult[];
+  tmdbPersonShows: TmdbMediaResult[];
+  tmdbTitleMovies: TmdbMediaResult[];
+  tmdbTitleShows: TmdbMediaResult[];
+}): QueryProfile {
+  const tmdbPersonWorks = [...tmdbPersonMovies, ...tmdbPersonShows];
+
+  const strongMusic = hasStrongMusicArtistSignal(spotifyArtistAlbums, query);
+  const strongTitle =
+    !strongMusic &&
+    (looksLikeTitleQuery(query) ||
+      hasStrongTitleResult({
+        query,
+        spotifyAlbumResults,
+        bookTitleResults,
+        tmdbTitleMovies,
+        tmdbTitleShows,
+        rawgGames,
+      }));
+
+  const strongFilmTv =
+    hasStrongTmdbCreatorWork(tmdbPersonWorks) ||
+    hasStrongTmdbActingWork(tmdbPersonWorks);
+
+  const strongAuthor = hasStrongAuthorSignal(bookAuthorResults, query);
+  const strongGame = hasStrongGameSignal(rawgGames, query);
+
+  return {
+    likelyTitleQuery: strongTitle,
+    likelyMusicArtist: strongMusic && !strongFilmTv && !strongAuthor,
+    likelyFilmTvPerson: strongFilmTv && !strongTitle,
+    likelyAuthor: strongAuthor && !strongFilmTv,
+    likelyGameQuery:
+      strongGame && !strongMusic && !strongFilmTv && !strongAuthor,
+  };
+}
+
+function getLaneBoost(type: string, source: string, profile: QueryProfile) {
+  let boost = 0;
+
+  if (profile.likelyTitleQuery) {
+    if (source.includes("title search")) boost += 1600;
+    if (type === "ALBUM" && source.includes("artist")) boost -= 2200;
+    if (source.includes("person")) boost -= 900;
+    if (source.includes("author")) boost -= 600;
+  }
+
+  if (profile.likelyMusicArtist) {
+    if (type === "ALBUM" && source.includes("artist")) boost += 3000;
+    if (type === "ALBUM" && source.includes("title")) boost += 1200;
+    if (type === "GAME") boost -= 1900;
+    if (type === "BOOK") boost -= 700;
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
+      boost -= 1400;
+    }
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
+      boost -= 900;
+    }
+  }
+
+  if (profile.likelyFilmTvPerson) {
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
+      boost += 4200;
+    }
+
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
+      boost += 500;
+    }
+
+    if (type === "ALBUM") boost -= 4200;
+    if (type === "BOOK") boost -= 800;
+    if (type === "GAME") boost -= 900;
+  }
+
+  if (profile.likelyAuthor) {
+    if (type === "BOOK" && source.includes("author")) boost += 1800;
+
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
+      boost -= 1200;
+    }
+
+    if (type === "ALBUM") boost -= 700;
+    if (type === "GAME") boost -= 400;
+  }
+
+  if (profile.likelyGameQuery) {
+    if (type === "GAME") boost += 1300;
+    if (type === "BOOK") boost -= 300;
+    if (type === "ALBUM") boost -= 400;
+  }
+
+  return boost;
+}
+
+function spotifyAlbumRank(
+  item: SpotifyAlbumResult,
+  query: string,
+  baseRank: number
+) {
+  const artistText = (item.artists || []).join(" ");
+  const exactArtist = isExactSpotifyArtist(item, query);
+  const multipleArtists = (item.artists || []).length > 1;
+
+  let score =
+    baseRank +
+    getQueryMatchScore({
+      query,
+      title: item.title,
+      creators: item.artists,
+    }) +
+    getRecencyScore(item.releaseDate) +
+    getBadTextPenalty(`${item.title} ${artistText}`);
+
+  if (exactArtist) score += 3500;
+
+  if (isExactTitle(item.title, query)) {
+    score += 4200;
+  }
+
+  if (isSingleWordQuery(query) && !isExactTitle(item.title, query)) {
+    score -= 1600;
+  }
+
+  if (item.albumType === "album") score += 500;
+  if (multipleArtists) score -= 250;
+
+  score += logarithmicPopularity(item.spotifyArtistFollowers, 350);
+  score += logarithmicPopularity(item.spotifyPopularity, 70);
+
+  const title = normalizeText(item.title);
+
+  if (title === "untrue") score += 700;
+  if (title === "burial") score += 600;
+  if (title.includes("dj mix")) score -= 400;
+  if (title.includes("demo")) score -= 500;
+  if (title.includes("unreleased")) score -= 500;
+
+  return score;
+}
+
+function tmdbRank(item: TmdbMediaResult, query: string, baseRank: number) {
+  const creditScore = item.creditScore ?? 0;
+  const creditReason = normalizeText(item.creditReason);
+
+  let score =
+    baseRank +
+    getQueryMatchScore({
+      query,
+      title: item.title,
+    }) +
+    getTmdbPopularityScore(item) +
+    getRecencyScore(item.releaseDate) +
+    getBadTextPenalty(`${item.title} ${item.description || ""}`);
+
+  score += creditScore;
+
+  if (isExactTitle(item.title, query)) score += 2500;
+  if (creditReason.includes("director")) score += 700;
+  if (creditReason.includes("creator")) score += 700;
+  if (creditReason.includes("writer")) score += 450;
+  if (creditReason.includes("screenplay")) score += 450;
+  if (creditReason.includes("story")) score += 350;
+  if (creditReason.includes("characters")) score += 300;
+  if (creditReason.includes("cast:")) score += 250;
+
+  return score;
+}
+
+function bookRank(item: GoogleBookResult, query: string, baseRank: number) {
+  const exactAuthor = isExactAuthor(item, query);
+  const ratingsCount = item.ratingsCount ?? 0;
+  const averageRating = item.averageRating ?? 0;
+  const pageCount = item.pageCount ?? 0;
+
+  let score =
+    baseRank +
+    getQueryMatchScore({
+      query,
+      title: item.title,
+      creators: item.authors,
+    }) +
+    getBookPopularityScore(item) +
+    getRecencyScore(item.releaseDate) +
+    getBadTextPenalty(`${item.title} ${(item.authors || []).join(" ")}`);
+
+  if (exactAuthor) score += 150;
+
+  if (isExactTitle(item.title, query)) {
+    score += 5200;
+  }
+
+  if (isSingleWordQuery(query) && !isExactTitle(item.title, query) && exactAuthor) {
+    score -= 2200;
+  }
+
+  if (ratingsCount === 0) score -= 900;
+  if (ratingsCount > 0 && ratingsCount < 5) score -= 500;
+  if (pageCount > 0 && pageCount < 60) score -= 300;
+  if (averageRating >= 4 && ratingsCount >= 25) score += 350;
+
+  return score;
+}
+
+function combinedBookScore(
+  item: CombinedGoogleBookResult,
+  query: string,
+  titlePart: string,
+  creatorPart: string
+) {
+  const title = normalizeText(item.title);
+  const authors = normalizeText((item.authors || []).join(" "));
+  const normalizedTitlePart = normalizeText(titlePart);
+  const normalizedCreatorPart = normalizeText(creatorPart);
+
+  let score = bookRank(item, query, 2600);
+
+  const titleMatches = title.includes(normalizedTitlePart);
+  const creatorMatches = authors.includes(normalizedCreatorPart);
+
+  if (title === normalizedTitlePart) score += 1800;
+  else if (titleMatches) score += 1200;
+
+  if (authors === normalizedCreatorPart) score += 1800;
+  else if (creatorMatches) score += 1200;
+
+  if (!titleMatches || !creatorMatches) {
     score -= 5000;
   }
 
   return score;
 }
 
-async function searchByTitle(q: string, type: TmdbSearchType) {
-  const data = await tmdbFetch<TmdbSearchResponse>(getEndpoint(type), {
-    query: q.trim(),
-    include_adult: "false",
-    language: "en-US",
-    page: "1",
-  });
-
-  return (data.results ?? [])
-    .filter((item) => {
-      const kind = getKind(item, type);
-      return kind === "movie" || kind === "tv";
-    })
-    .map((item) => toMediaResult(item, type))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item))
-    .sort((a, b) => {
-      const aRaw = a.raw as TmdbResult;
-      const bRaw = b.raw as TmdbResult;
-
-      return scoreTitleResult(bRaw, q) - scoreTitleResult(aRaw, q);
-    });
+function gameRank(item: RawgGameResult, query: string, baseRank: number) {
+  return (
+    baseRank +
+    getQueryMatchScore({
+      query,
+      title: item.title,
+      creators: [...(item.platforms || []), ...(item.genres || [])],
+    }) +
+    getGamePopularityScore(item) +
+    getRecencyScore(item.releaseDate) +
+    getBadTextPenalty(item.title)
+  );
 }
 
-async function searchByPerson(q: string, type: TmdbSearchType) {
-  const personData = await tmdbFetch<TmdbPersonSearchResponse>("search/person", {
-    query: q.trim(),
-    include_adult: "false",
-    language: "en-US",
-    page: "1",
+function addUnique(results: SearchResult[]) {
+  const seen = new Set<string>();
+
+  return results.filter((item) => {
+    const key = `${item.type}:${normalizeText(item.title)}`;
+
+    if (seen.has(key)) return false;
+
+    seen.add(key);
+    return true;
   });
-
-  const people = (personData.results ?? [])
-    .filter((person) => person.id)
-    .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
-    .slice(0, 3);
-
-  const allWorks: ScoredTmdbResult[] = [];
-
-  for (const person of people) {
-    const credits = await tmdbFetch<TmdbCreditsResponse>(
-      `person/${person.id}/combined_credits`,
-      {
-        language: "en-US",
-      }
-    );
-
-    const cast = credits.cast ?? [];
-    const crew = credits.crew ?? [];
-
-    for (const item of crew) {
-      if (!item.id) continue;
-
-      const kind = item.media_type;
-      if (kind !== "movie" && kind !== "tv") continue;
-
-      if (!isUsefulCrewCredit(item)) continue;
-
-      const credit = getCrewCreditScore(item);
-
-      allWorks.push({
-        ...item,
-        _creditScore: credit.score,
-        _creditReason: credit.reason,
-      });
-    }
-
-    for (const item of cast) {
-      if (!item.id) continue;
-
-      const kind = item.media_type;
-      if (kind !== "movie" && kind !== "tv") continue;
-
-      const credit = getCastCreditScore(item);
-
-      allWorks.push({
-        ...item,
-        _creditScore: credit.score,
-        _creditReason: credit.reason,
-      });
-    }
-  }
-
-  const wantedKind = type === "movie" ? "movie" : type === "tv" ? "tv" : null;
-  const bestByKey = new Map<string, ScoredTmdbResult>();
-
-  for (const item of allWorks) {
-    const kind = item.media_type;
-
-    if (kind !== "movie" && kind !== "tv") continue;
-    if (wantedKind && kind !== wantedKind) continue;
-
-    const key = `${kind}:${item.id}`;
-    const existing = bestByKey.get(key);
-
-    if (!existing || scorePersonWork(item) > scorePersonWork(existing)) {
-      bestByKey.set(key, item);
-    }
-  }
-
-  return [...bestByKey.values()]
-    .filter((item) => !shouldDropLowValuePersonCredit(item))
-    .map((item) => {
-      const mediaType: TmdbSearchType =
-        item.media_type === "movie" || item.media_type === "tv"
-          ? item.media_type
-          : type;
-
-      return toMediaResult(item, mediaType);
-    })
-    .filter((item): item is NonNullable<typeof item> => Boolean(item))
-    .sort((a, b) => {
-      const aRaw = a.raw as ScoredTmdbResult;
-      const bRaw = b.raw as ScoredTmdbResult;
-
-      return scorePersonWork(bRaw) - scorePersonWork(aRaw);
-    })
-    .slice(0, 25);
 }
 
-export async function GET(request: Request) {
+function hasCreativeCreditInSubtitle(subtitle: string) {
+  const normalized = normalizeText(subtitle);
+
+  return (
+    normalized.includes("writer") ||
+    normalized.includes("screenplay") ||
+    normalized.includes("creator") ||
+    normalized.includes("director") ||
+    normalized.includes("story") ||
+    normalized.includes("characters")
+  );
+}
+
+function shouldKeepResult(
+  result: SearchResult,
+  query: string,
+  profile: QueryProfile
+) {
+  if (
+    (result.source.includes("title search") || result.source === "RAWG") &&
+    isWeakSingleWordLeak(query, result.title)
+  ) {
+    return false;
+  }
+
+  if (profile.likelyMusicArtist && result.type === "GAME") {
+    return false;
+  }
+
+  if (
+    profile.likelyMusicArtist &&
+    (result.type === "MOVIE" || result.type === "SHOW") &&
+    result.source.includes("title search")
+  ) {
+    return false;
+  }
+
+  if (
+    profile.likelyFilmTvPerson &&
+    result.type === "ALBUM" &&
+    result.source.includes("Spotify artist")
+  ) {
+    return false;
+  }
+
+  if (
+    profile.likelyAuthor &&
+    (result.type === "MOVIE" || result.type === "SHOW") &&
+    result.source.includes("TMDB person")
+  ) {
+    return hasCreativeCreditInSubtitle(result.subtitle);
+  }
+
+  return true;
+}
+
+function applyProfileAndCaps(results: SearchResult[], profile: QueryProfile) {
+  return results.map((result) => ({
+    ...result,
+    rank: result.rank + getLaneBoost(result.type, result.source, profile),
+  }));
+}
+
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q")?.trim();
 
-    const q = searchParams.get("q") ?? "";
-    const type = normalizeSearchType(searchParams.get("type"));
-    const searchBy = normalizeSearchBy(searchParams.get("searchBy"));
-
-    if (!q.trim()) {
+    if (!query) {
       return NextResponse.json(
-        { error: "Search query is required." },
+        { error: "Missing required query parameter: q" },
         { status: 400 }
       );
     }
 
-    if (!process.env.TMDB_ACCESS_TOKEN) {
-      return NextResponse.json(
-        { error: "TMDB_ACCESS_TOKEN is missing." },
-        { status: 500 }
-      );
-    }
+    const [
+      localMedia,
+      localPeople,
+      localAlbumsByArtist,
+      spotifyArtistAlbums,
+      spotifyAlbumResults,
+      bookAuthorResults,
+      bookTitleResults,
+      combinedBookResults,
+      rawgGames,
+      tmdbPersonMovies,
+      tmdbPersonShows,
+      tmdbTitleMovies,
+      tmdbTitleShows,
+    ] = await Promise.all([
+      prisma.mediaItem.findMany({
+        where: {
+          OR: [
+            { title: { contains: query, mode: "insensitive" } },
+            { description: { contains: query, mode: "insensitive" } },
+          ],
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 10,
+      }),
 
-    const results =
-      searchBy === "person"
-        ? await searchByPerson(q, type)
-        : await searchByTitle(q, type);
+      prisma.person.findMany({
+        where: {
+          fullName: {
+            contains: query,
+            mode: "insensitive",
+          },
+        },
+        include: {
+          credits: {
+            include: { media: true },
+            take: 8,
+          },
+        },
+        take: 8,
+      }),
 
-    return NextResponse.json(results);
+      prisma.mediaItem.findMany({
+        where: {
+          albumDetails: {
+            primaryArtistName: {
+              contains: query,
+              mode: "insensitive",
+            },
+          },
+        },
+        include: { albumDetails: true },
+        take: 12,
+      }),
+
+      fetchSpotifyAlbums(request, query, "artist"),
+      fetchSpotifyAlbums(request, query, "album"),
+      fetchGoogleBooks(request, query, "author"),
+      fetchGoogleBooks(request, query, "title"),
+      fetchCombinedBookResults(request, query),
+      fetchRawgGames(request, query),
+      fetchTmdbPersonWorks(request, query, "movie"),
+      fetchTmdbPersonWorks(request, query, "tv"),
+      fetchTmdbTitleResults(request, query, "movie"),
+      fetchTmdbTitleResults(request, query, "tv"),
+    ]);
+
+    const profile = getQueryProfile({
+      query,
+      spotifyArtistAlbums,
+      spotifyAlbumResults,
+      bookAuthorResults,
+      bookTitleResults,
+      rawgGames,
+      tmdbPersonMovies,
+      tmdbPersonShows,
+      tmdbTitleMovies,
+      tmdbTitleShows,
+    });
+
+    const useSpotifyArtistLane = shouldUseSpotifyArtistLane(
+      query,
+      spotifyArtistAlbums
+    );
+
+    const rawResults: SearchResult[] = [
+      ...localMedia.map((item) => ({
+        id: `local-media:${item.id}`,
+        title: item.title,
+        subtitle: mediaSubtitle(item),
+        type: item.type,
+        source: "Local media",
+        href: `/media/${item.id}`,
+        coverUrl: item.coverUrl ?? null,
+        provider: "LOCAL",
+        externalId: String(item.id),
+        rank:
+          3200 +
+          getQueryMatchScore({ query, title: item.title }) +
+          getRecencyScore(item.releaseDate),
+      })),
+
+      ...localPeople.flatMap((person) => {
+        const personResult: SearchResult = {
+          id: `local-person:${person.id}`,
+          title: person.fullName,
+          subtitle:
+            person.credits.length > 0
+              ? person.credits
+                  .map((credit) => `${credit.creditRole}: ${credit.media.title}`)
+                  .slice(0, 4)
+                  .join(" · ")
+              : "Person / creator",
+          type: "PERSON",
+          source: "Local credits",
+          href: `/search?q=${encodeURIComponent(person.fullName)}`,
+          coverUrl: null,
+          provider: "LOCAL",
+          externalId: String(person.id),
+          rank: 2600 + getQueryMatchScore({ query, title: person.fullName }),
+        };
+
+        const creditResults: SearchResult[] = person.credits.map((credit) => ({
+          id: `local-credit:${person.id}:${credit.mediaId}:${credit.id}`,
+          title: credit.media.title,
+          subtitle: `${person.fullName} · ${credit.creditRole}${
+            credit.characterName ? ` · ${credit.characterName}` : ""
+          }`,
+          type: credit.media.type,
+          source: "Local credits",
+          href: `/media/${credit.mediaId}`,
+          coverUrl: credit.media.coverUrl ?? null,
+          provider: "LOCAL",
+          externalId: String(credit.mediaId),
+          rank:
+            2500 +
+            getQueryMatchScore({
+              query,
+              title: credit.media.title,
+              creators: [person.fullName],
+            }),
+        }));
+
+        return [personResult, ...creditResults];
+      }),
+
+      ...localAlbumsByArtist.map((item) => ({
+        id: `local-album-artist:${item.id}`,
+        title: item.title,
+        subtitle: `${item.albumDetails?.primaryArtistName || "Unknown artist"} · ${
+          item.releaseDate ? item.releaseDate.getFullYear() : "Unknown year"
+        }`,
+        type: "ALBUM",
+        source: "Local artist",
+        href: `/media/${item.id}`,
+        coverUrl: item.coverUrl ?? null,
+        provider: "LOCAL",
+        externalId: String(item.id),
+        rank:
+          3300 +
+          getQueryMatchScore({
+            query,
+            title: item.title,
+            creators: [item.albumDetails?.primaryArtistName || ""],
+          }) +
+          getRecencyScore(item.releaseDate),
+      })),
+
+      ...spotifyArtistAlbums
+        .filter(() => useSpotifyArtistLane)
+        .map((item) => ({
+          id: `spotify-artist:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            item.artists?.join(", "),
+            yearFromDate(item.releaseDate),
+            item.albumType || "Album",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "ALBUM",
+          source: "Spotify artist search",
+          href: `/add-entry?source=spotify&q=${encodeURIComponent(item.title)}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "SPOTIFY",
+          externalId: item.externalId,
+          rank: spotifyAlbumRank(item, query, 5200),
+        })),
+
+      ...spotifyAlbumResults
+        .filter((item) =>
+          isStrongQueryMatch({
+            query,
+            title: item.title,
+            creators: item.artists || [],
+          })
+        )
+        .filter((item) => !isWeakSingleWordLeak(query, item.title))
+        .filter((item) => {
+          if (item.albumType === "single" && !isExactTitle(item.title, query)) {
+            return false;
+          }
+
+          return true;
+        })
+        .map((item) => ({
+          id: `spotify-title:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            item.artists?.join(", "),
+            yearFromDate(item.releaseDate),
+            item.albumType || "Album",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "ALBUM",
+          source: "Spotify title search",
+          href: `/add-entry?source=spotify&q=${encodeURIComponent(item.title)}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "SPOTIFY",
+          externalId: item.externalId,
+          rank: spotifyAlbumRank(item, query, 1600),
+        })),
+
+      ...combinedBookResults.map((item) => ({
+        id: `book-combined:${item.externalId}`,
+        title: item.title,
+        subtitle: [
+          item.authors?.join(", "),
+          yearFromDate(item.releaseDate),
+          item.pageCount ? `${item.pageCount} pages` : null,
+          item.ratingsCount ? `${item.ratingsCount} ratings` : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        type: "BOOK",
+        source: "Google Books combined title/author search",
+        href: `/add-entry?source=books&q=${encodeURIComponent(item.title)}`,
+        coverUrl: item.coverUrl ?? null,
+        provider: "GOOGLE_BOOKS",
+        externalId: item.externalId,
+        rank: combinedBookScore(
+          item,
+          query,
+          item._combinedTitlePart || query,
+          item._combinedCreatorPart || query
+        ),
+      })),
+
+      ...bookAuthorResults
+        .filter((item) => {
+          if (!isSingleWordQuery(query)) return true;
+
+          return isExactTitle(item.title, query);
+        })
+        .map((item) => ({
+          id: `book-author:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            item.authors?.join(", "),
+            yearFromDate(item.releaseDate),
+            item.pageCount ? `${item.pageCount} pages` : null,
+            item.ratingsCount ? `${item.ratingsCount} ratings` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "BOOK",
+          source: "Google Books author search",
+          href: `/add-entry?source=books&q=${encodeURIComponent(item.title)}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "GOOGLE_BOOKS",
+          externalId: item.externalId,
+          rank: bookRank(item, query, 1400),
+        })),
+
+      ...bookTitleResults
+        .filter((item) =>
+          isStrongQueryMatch({
+            query,
+            title: item.title,
+            creators: item.authors || [],
+          })
+        )
+        .filter((item) => !isWeakSingleWordLeak(query, item.title))
+        .map((item) => ({
+          id: `book-title:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            item.authors?.join(", "),
+            yearFromDate(item.releaseDate),
+            item.pageCount ? `${item.pageCount} pages` : null,
+            item.ratingsCount ? `${item.ratingsCount} ratings` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "BOOK",
+          source: "Google Books title search",
+          href: `/add-entry?source=books&q=${encodeURIComponent(item.title)}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "GOOGLE_BOOKS",
+          externalId: item.externalId,
+          rank: bookRank(item, query, 850),
+        })),
+
+      ...rawgGames
+        .filter((item) =>
+          isStrongQueryMatch({
+            query,
+            title: item.title,
+            creators: [...(item.platforms || []), ...(item.genres || [])],
+          })
+        )
+        .filter((item) => !isWeakSingleWordLeak(query, item.title))
+        .map((item) => ({
+          id: `rawg-game:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            yearFromDate(item.releaseDate),
+            item.platforms?.slice(0, 3).join(", "),
+            item.metacritic ? `Metacritic ${item.metacritic}` : null,
+            item.ratingsCount ? `${item.ratingsCount} ratings` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "GAME",
+          source: "RAWG",
+          href: `/add-entry?source=rawg&q=${encodeURIComponent(item.title)}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "RAWG",
+          externalId: item.externalId,
+          rank: gameRank(item, query, profile.likelyMusicArtist ? 100 : 1500),
+        })),
+
+      ...tmdbPersonMovies
+        .filter((item) => {
+          if (!isSingleWordQuery(query)) return true;
+
+          return isExactTitle(item.title, query);
+        })
+        .map((item) => ({
+          id: `tmdb-person-movie:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            query,
+            yearFromDate(item.releaseDate),
+            item.creditReason || null,
+            item.voteCount ? `${item.voteCount} votes` : null,
+            item.description?.slice(0, 120),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "MOVIE",
+          source: "TMDB person search",
+          href: `/add-entry?source=tmdb&type=movie&q=${encodeURIComponent(
+            item.title
+          )}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "TMDB",
+          externalId: item.externalId,
+          rank: tmdbRank(item, query, 2100),
+        })),
+
+      ...tmdbPersonShows
+        .filter((item) => {
+          if (!isSingleWordQuery(query)) return true;
+
+          return isExactTitle(item.title, query);
+        })
+        .map((item) => ({
+          id: `tmdb-person-show:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            query,
+            yearFromDate(item.releaseDate),
+            item.creditReason || null,
+            item.voteCount ? `${item.voteCount} votes` : null,
+            item.description?.slice(0, 120),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "SHOW",
+          source: "TMDB person search",
+          href: `/add-entry?source=tmdb&type=tv&q=${encodeURIComponent(
+            item.title
+          )}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "TMDB",
+          externalId: item.externalId,
+          rank: tmdbRank(item, query, 2100),
+        })),
+
+      ...tmdbTitleMovies
+        .filter((item) => isStrongQueryMatch({ query, title: item.title }))
+        .filter((item) => !isWeakSingleWordLeak(query, item.title))
+        .map((item) => ({
+          id: `tmdb-title-movie:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            yearFromDate(item.releaseDate),
+            item.voteCount ? `${item.voteCount} votes` : null,
+            item.description?.slice(0, 120),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "MOVIE",
+          source: "TMDB title search",
+          href: `/add-entry?source=tmdb&type=movie&q=${encodeURIComponent(
+            item.title
+          )}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "TMDB",
+          externalId: item.externalId,
+          rank: tmdbRank(item, query, 1000),
+        })),
+
+      ...tmdbTitleShows
+        .filter((item) => isStrongQueryMatch({ query, title: item.title }))
+        .filter((item) => !isWeakSingleWordLeak(query, item.title))
+        .map((item) => ({
+          id: `tmdb-title-show:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            yearFromDate(item.releaseDate),
+            item.voteCount ? `${item.voteCount} votes` : null,
+            item.description?.slice(0, 120),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: "SHOW",
+          source: "TMDB title search",
+          href: `/add-entry?source=tmdb&type=tv&q=${encodeURIComponent(
+            item.title
+          )}`,
+          coverUrl: item.coverUrl ?? null,
+          provider: "TMDB",
+          externalId: item.externalId,
+          rank: tmdbRank(item, query, 1000),
+        })),
+    ];
+
+    const sortedResults = addUnique(
+      applyProfileAndCaps(rawResults, profile).filter((result) =>
+        shouldKeepResult(result, query, profile)
+      )
+    )
+      .sort((a, b) => b.rank - a.rank)
+      .slice(0, 50)
+      .map(({ rank, ...item }) => item);
+
+    return NextResponse.json({ results: sortedResults });
   } catch (error) {
-    console.error("TMDB search error:", error);
+    console.error("Universal search error:", error);
 
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "TMDB search failed.",
+        error: error instanceof Error ? error.message : "Failed to search.",
       },
       { status: 500 }
     );
