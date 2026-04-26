@@ -1,0 +1,368 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MediaType {
+  MOVIE
+  SHOW
+  ALBUM
+  GAME
+  BOOK
+}
+
+enum EntryStatus {
+  WISHLIST
+  IN_PROGRESS
+  COMPLETED
+  PAUSED
+  DROPPED
+}
+
+enum Visibility {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
+enum ProfilePrivacy {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
+enum LogEventType {
+  ADDED
+  STARTED
+  COMPLETED
+  RATED
+  REVIEWED
+  REWATCHED
+  UPDATED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+enum ExternalProvider {
+  TMDB
+  GOOGLE_BOOKS
+  MUSICBRAINZ
+  SPOTIFY
+  IGDB
+  RAWG
+  MANUAL
+}
+
+enum BlobPurpose {
+  AVATAR
+  BANNER
+  MEDIA_COVER
+  REVIEW_IMAGE
+  OTHER
+}
+
+model UserProfile {
+  id          String         @id
+  username    String         @unique
+  displayName String?
+  bio         String?
+  privacy     ProfilePrivacy @default(PUBLIC)
+
+  avatarUrl    String?
+  bannerUrl    String?
+  avatarBlobId Int?
+  bannerBlobId Int?
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  entries     UserMediaEntry[]
+  favorites   UserProfileFavorite[]
+
+  authCredential AuthCredential?
+  sessions       AuthSession[]
+
+  uploadedBlobs BlobAsset[] @relation("UploadedByUser")
+  avatarBlob    BlobAsset?  @relation("ProfileAvatar", fields: [avatarBlobId], references: [id])
+  bannerBlob    BlobAsset?  @relation("ProfileBanner", fields: [bannerBlobId], references: [id])
+
+  friendshipsAsA      Friendship[] @relation("FriendshipUserA")
+  friendshipsAsB      Friendship[] @relation("FriendshipUserB")
+  friendshipActions   Friendship[] @relation("FriendshipActionUser")
+}
+
+model AuthCredential {
+  id           Int      @id @default(autoincrement())
+  userId       String   @unique
+  email        String?  @unique
+  passwordHash String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuthSession {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model BlobAsset {
+  id          Int         @id @default(autoincrement())
+  url         String
+  pathname    String      @unique
+  contentType String?
+  sizeBytes   Int?
+  purpose     BlobPurpose @default(OTHER)
+
+  uploadedById String?
+  uploadedBy   UserProfile? @relation("UploadedByUser", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  avatarForProfiles UserProfile[] @relation("ProfileAvatar")
+  bannerForProfiles UserProfile[] @relation("ProfileBanner")
+}
+
+model MediaItem {
+  id            Int       @id @default(autoincrement())
+  type          MediaType
+  title         String
+  originalTitle String?
+  description   String?
+  releaseDate   DateTime?
+
+  coverUrl      String?
+  backdropUrl   String?
+  languageCode  String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  movieDetails  MovieDetails?
+  showDetails   ShowDetails?
+  bookDetails   BookDetails?
+  albumDetails  AlbumDetails?
+  gameDetails   GameDetails?
+
+  entries       UserMediaEntry[]
+  favorites     UserProfileFavorite[]
+  logEvents     UserMediaLogEvent[]
+  externalRefs  MediaExternalRef[]
+  genres        MediaGenre[]
+  credits       MediaCredit[]
+
+  @@index([type])
+  @@index([title])
+  @@index([releaseDate])
+}
+
+model MovieDetails {
+  mediaId        Int @id
+  runtimeMinutes Int?
+
+  media MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model ShowDetails {
+  mediaId           Int @id
+  seasonsCount      Int?
+  episodesCount     Int?
+  avgRuntimeMinutes Int?
+  showStatus        String?
+
+  media MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model BookDetails {
+  mediaId                  Int @id
+  pageCount                Int?
+  estimatedReadTimeMinutes Int?
+  isbn13                   String? @unique
+
+  media MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model AlbumDetails {
+  mediaId           Int @id
+  totalTracks       Int?
+  durationSeconds   Int?
+  primaryArtistName String?
+
+  media MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model GameDetails {
+  mediaId         Int      @id
+  timeToBeatHours Decimal? @db.Decimal(5, 2)
+  multiplayer     Boolean  @default(false)
+
+  media MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+}
+
+model UserMediaEntry {
+  id               Int         @id @default(autoincrement())
+  userId           String
+  mediaId          Int
+
+  status           EntryStatus @default(WISHLIST)
+  ratingValue      Int?
+  reviewText       String?
+  containsSpoilers Boolean     @default(false)
+
+  startedOn        DateTime?
+  completedOn      DateTime?
+  completionCount  Int         @default(0)
+
+  visibility       Visibility  @default(PUBLIC)
+  lastActivityAt   DateTime    @default(now())
+
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user             UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media            MediaItem   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  logEvents        UserMediaLogEvent[]
+
+  @@unique([userId, mediaId])
+  @@index([userId, lastActivityAt])
+  @@index([mediaId])
+}
+
+model UserMediaLogEvent {
+  id            Int          @id @default(autoincrement())
+  entryId       Int?
+  mediaId       Int?
+  userId        String?
+
+  eventType     LogEventType
+  bodyText      String?
+  ratingValue   Int?
+  progressValue String?
+  progressUnit  String?
+  details       Json?
+
+  createdAt     DateTime     @default(now())
+
+  entry         UserMediaEntry? @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  media         MediaItem?      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+  @@index([mediaId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model UserProfileFavorite {
+  userId     String
+  slotNumber Int
+  mediaId    Int
+
+  updatedAt  DateTime @updatedAt
+
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media      MediaItem   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([userId, slotNumber])
+  @@unique([userId, mediaId])
+}
+
+model Friendship {
+  id           Int              @id @default(autoincrement())
+
+  userAId      String
+  userBId      String
+  actionUserId String
+
+  status       FriendshipStatus @default(PENDING)
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  userA        UserProfile      @relation("FriendshipUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB        UserProfile      @relation("FriendshipUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  actionUser   UserProfile      @relation("FriendshipActionUser", fields: [actionUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+  @@index([actionUserId])
+}
+
+model Genre {
+  id    Int          @id @default(autoincrement())
+  name  String       @unique
+
+  media MediaGenre[]
+}
+
+model MediaGenre {
+  mediaId Int
+  genreId Int
+
+  media   MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre   Genre     @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
+}
+
+model Person {
+  id        Int      @id @default(autoincrement())
+  fullName  String
+  imageUrl  String?
+  bio       String?
+
+  credits   MediaCredit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MediaCredit {
+  id            Int       @id @default(autoincrement())
+  mediaId       Int
+  personId      Int
+  creditRole    String
+  characterName String?
+  billingOrder  Int?
+
+  media         MediaItem @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person        Person    @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId])
+  @@index([personId])
+}
+
+model MediaExternalRef {
+  id           Int              @id @default(autoincrement())
+  mediaId      Int
+  provider     ExternalProvider
+  externalId   String
+  externalUrl  String?
+  rawPayload   Json?
+  lastSyncedAt DateTime?
+
+  createdAt    DateTime         @default(now())
+
+  media        MediaItem        @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([mediaId])
+}
