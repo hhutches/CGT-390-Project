@@ -10,7 +10,7 @@ type CurrentUser = {
   avatarUrl: string | null;
 };
 
-type FeedScope = "all" | "friends" | "me";
+type FeedScope = "all" | "friends" | "me" | "popular";
 
 type Media = {
   id: number;
@@ -119,6 +119,10 @@ function formatDuration(seconds: number | null | undefined) {
 }
 
 function getEmptyMessage(scope: FeedScope) {
+  if (scope === "popular") {
+    return "No popular activity this week yet.";
+  }
+
   if (scope === "friends") {
     return "No friend activity yet. Once your friends log media, it will show here.";
   }
@@ -373,7 +377,12 @@ export default function FeedPage() {
         scope: nextScope,
       });
 
-      const res = await fetch(`/api/feed?${params.toString()}`, {
+      const feedUrl =
+        nextScope === "popular"
+          ? "/api/feed/popular-this-week"
+          : `/api/feed?${params.toString()}`;
+
+      const res = await fetch(feedUrl, {
         cache: "no-store",
       });
 
@@ -569,6 +578,14 @@ export default function FeedPage() {
           disabled={loading || !currentUser}
         />
 
+        <ScopeButton
+          label="Popular This Week"
+          value="popular"
+          activeScope={scope}
+          onClick={changeScope}
+          disabled={loading || !currentUser}
+        />
+
         <button
           type="button"
           onClick={refreshFeed}
@@ -637,7 +654,7 @@ export default function FeedPage() {
                       {user.displayName || user.username || "Unknown user"}
                     </strong>
                   </a>{" "}
-                  {formatEventType(event.eventType)}{" "}
+                  {scope === "popular" ? "popularly logged" : formatEventType(event.eventType)}{" "}
                   <a href={`/media/${media.id}`}>
                     <strong>{media.title}</strong>
                   </a>

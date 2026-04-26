@@ -778,8 +778,7 @@ function getQueryProfile({
         rawgGames,
       }));
 
-  const strongAuthor =
-    hasStrongAuthorSignal(bookAuthorResults, query) && !strongFilmTv;
+  const strongAuthor = hasStrongAuthorSignal(bookAuthorResults, query);
 
   const strongGame =
     hasStrongGameSignal(rawgGames, query) &&
@@ -821,24 +820,19 @@ function getLaneBoost(type: string, source: string, profile: QueryProfile) {
 
   if (profile.likelyFilmTvPerson) {
     if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
-      boost += 5200;
-    }
+     boost += profile.likelyAuthor ? 2600 : 5200;
+   }
 
-    if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
-      boost += 500;
-    }
+     if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
+     boost += 500;
+   }
 
     if (type === "ALBUM") boost -= 9000;
-    if (type === "BOOK") boost -= 1000;
+    if (type === "BOOK" && !profile.likelyAuthor) boost -= 1000;
     if (type === "GAME") boost -= 1200;
-  }
+   }
 
-  if (profile.likelyAuthor) {
-    if (type === "BOOK" && source.includes("author")) boost += 1800;
-
-    if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
-      boost -= 1200;
-    }
+    if (profile.likelyAuthor) {
 
     if (type === "ALBUM") boost -= 700;
     if (type === "GAME") boost -= 400;
