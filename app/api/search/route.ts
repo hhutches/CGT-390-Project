@@ -152,10 +152,21 @@ function getBaseUrl(request: NextRequest) {
   return `${protocol}://${host}`;
 }
 
-async function fetchJsonArray<T>(url: URL, resultKey?: string) {
+async function fetchJsonArray<T>(
+  request: NextRequest,
+  url: URL,
+  resultKey?: string
+) {
   try {
+    const cookie = request.headers.get("cookie") || "";
+    const authorization = request.headers.get("authorization") || "";
+
     const res = await fetch(url.toString(), {
       cache: "no-store",
+      headers: {
+        ...(cookie ? { cookie } : {}),
+        ...(authorization ? { authorization } : {}),
+      },
     });
 
     if (!res.ok) {
@@ -294,7 +305,7 @@ async function fetchTmdbPersonWorks(
   url.searchParams.set("type", type);
   url.searchParams.set("searchBy", "person");
 
-  return fetchJsonArray<TmdbMediaResult>(url);
+  return fetchJsonArray<TmdbMediaResult>(request, url);
 }
 
 async function fetchTmdbTitleResults(
@@ -309,7 +320,7 @@ async function fetchTmdbTitleResults(
   url.searchParams.set("type", type);
   url.searchParams.set("searchBy", "title");
 
-  return fetchJsonArray<TmdbMediaResult>(url);
+  return fetchJsonArray<TmdbMediaResult>(request, url);
 }
 
 async function fetchGoogleBooks(
@@ -323,7 +334,7 @@ async function fetchGoogleBooks(
   url.searchParams.set("q", query);
   url.searchParams.set("searchBy", searchBy);
 
-  return fetchJsonArray<GoogleBookResult>(url, "results");
+  return fetchJsonArray<GoogleBookResult>(request, url, "results");
 }
 
 function getCombinedQueryParts(query: string) {
@@ -394,7 +405,7 @@ async function fetchRawgGames(request: NextRequest, query: string) {
 
   url.searchParams.set("q", query);
 
-  return fetchJsonArray<RawgGameResult>(url, "results");
+  return fetchJsonArray<RawgGameResult>(request, url, "results");
 }
 
 function getQueryMatchScore({
