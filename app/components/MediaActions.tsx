@@ -103,6 +103,12 @@ export default function MediaActions({
         throw new Error("Invalid media item.");
       }
 
+      const numericMediaId = Number(mediaId);
+
+      if (!Number.isInteger(numericMediaId) || numericMediaId <= 0) {
+        throw new Error("Invalid media item.");
+      }
+
       const response = await fetch("/api/entries", {
         method: "POST",
         headers: {
