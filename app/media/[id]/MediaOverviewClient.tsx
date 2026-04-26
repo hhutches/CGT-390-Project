@@ -155,12 +155,7 @@ export default function MediaActions({
         throw new Error("Please log in to add, rate, or review this.");
       }
 
-      const pathMediaId =
-        typeof window !== "undefined"
-          ? window.location.pathname.split("/").filter(Boolean).pop()
-          : "";
-
-      const numericMediaId = Number(pathMediaId);
+      const numericMediaId = Number(mediaId);
 
       if (!Number.isInteger(numericMediaId) || numericMediaId <= 0) {
         throw new Error("Invalid media item.");
