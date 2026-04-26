@@ -663,6 +663,20 @@ function getBadTextPenalty(value: string | null | undefined) {
   if (text.includes("8bit")) penalty -= 700;
   if (text.includes("cover band")) penalty -= 700;
 
+  // Low-quality celebrity/fan/self-published book noise.
+  if (text.includes("fan club")) penalty -= 3500;
+  if (text.includes("notebook")) penalty -= 3500;
+  if (text.includes("journal")) penalty -= 3000;
+  if (text.includes("jigsaw")) penalty -= 3500;
+  if (text.includes("puzzle")) penalty -= 3000;
+  if (text.includes("birthday gifts")) penalty -= 3000;
+  if (text.includes("lined journal")) penalty -= 3500;
+  if (text.includes("unauthorized biography")) penalty -= 1500;
+  if (text.includes("star of twilight")) penalty -= 1800;
+  if (text.includes("1000 lives")) penalty -= 1200;
+  if (text.includes("i love ")) penalty -= 2200;
+  if (text.includes("fame ")) penalty -= 1200;
+
   if (text.includes("calendar")) penalty -= 650;
   if (text.includes("unauthorized")) penalty -= 350;
   if (text.includes("interview")) penalty -= 450;
@@ -852,8 +866,24 @@ function hasStrongAuthorSignal(items: GoogleBookResult[], query: string) {
   return exactAuthorBooks.some((item) => {
     const ratingsCount = item.ratingsCount ?? 0;
     const pageCount = item.pageCount ?? 0;
+    const title = normalizeText(item.title);
+    const authors = normalizeText((item.authors || []).join(" "));
 
-    return ratingsCount >= 10 || pageCount >= 120;
+    const fanOrMerchNoise =
+      title.includes("fan club") ||
+      title.includes("notebook") ||
+      title.includes("journal") ||
+      title.includes("jigsaw") ||
+      title.includes("puzzle") ||
+      title.includes("birthday gifts") ||
+      authors.includes("fan club");
+
+    if (fanOrMerchNoise) return false;
+
+    // Make author detection stricter. This keeps real authors like Stephen King
+    // strong, but prevents actor names like Robert Pattinson from becoming
+    // primarily book/author searches because of fan books.
+    return ratingsCount >= 50 || pageCount >= 180;
   });
 }
 
@@ -995,7 +1025,11 @@ function getLaneBoost(type: string, source: string, profile: QueryProfile) {
     }
 
     if (type === "ALBUM") boost -= 9000;
-    if (type === "BOOK" && !profile.likelyAuthor) boost -= 1000;
+
+    // If this is clearly an actor/director/person query, fan books and
+    // low-signal Google Books results should not outrank actual film credits.
+    if (type === "BOOK" && !profile.likelyAuthor) boost -= 6500;
+
     if (type === "GAME") boost -= 1200;
   }
 
@@ -1087,7 +1121,30 @@ function tmdbRank(item: TmdbMediaResult, query: string, baseRank: number) {
   if (creditReason.includes("screenplay")) score += 550;
   if (creditReason.includes("story")) score += 350;
   if (creditReason.includes("characters")) score += 300;
-  if (creditReason.includes("cast:")) score += 250;
+  if (creditReason.includes("cast:")) score += 650;
+
+  // Actor/person searches should surface major well-known credits first.
+  // This helps queries like "robert pattinson" rank Twilight, The Batman,
+  // Good Time, etc. above low-signal books or tiny credits.
+  if (creditReason.includes("cast:") && (item.voteCount ?? 0) >= 1000) {
+    score += 500;
+  }
+
+  if (creditReason.includes("cast:") && (item.voteCount ?? 0) >= 5000) {
+    score += 900;
+  }
+
+  if (creditReason.includes("cast:") && (item.voteCount ?? 0) >= 10000) {
+    score += 1200;
+  }
+
+  if (creditReason.includes("cast:") && (item.popularity ?? 0) >= 10) {
+    score += 500;
+  }
+
+  if (creditReason.includes("cast:") && (item.popularity ?? 0) >= 20) {
+    score += 800;
+  }
 
   return score;
 }
@@ -1276,6 +1333,21 @@ function shouldKeepResult(
 
   if (profile.likelyFilmTvPerson && result.type === "ALBUM") {
     return false;
+  }
+
+  if (profile.likelyFilmTvPerson && result.type === "BOOK" && !profile.likelyAuthor) {
+    const text = normalizeText(`${result.title} ${result.subtitle}`);
+
+    const hardBookNoise =
+      text.includes("fan club") ||
+      text.includes("notebook") ||
+      text.includes("journal") ||
+      text.includes("jigsaw") ||
+      text.includes("puzzle") ||
+      text.includes("birthday gifts") ||
+      text.includes("lined journal");
+
+    if (hardBookNoise) return false;
   }
 
   if (
