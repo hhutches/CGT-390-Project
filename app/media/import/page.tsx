@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type ImportState =
   | { status: "loading"; message: string }
@@ -9,6 +9,7 @@ type ImportState =
   | { status: "ready"; mediaId: string; title?: string | null };
 
 function MediaImportInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const provider = searchParams.get("provider");
@@ -106,12 +107,8 @@ function MediaImportInner() {
   useEffect(() => {
     if (state.status !== "ready") return;
 
-    const timeout = window.setTimeout(() => {
-      window.location.href = `/media/${state.mediaId}`;
-    }, 600);
-
-    return () => window.clearTimeout(timeout);
-  }, [state]);
+    router.replace(`/media/${state.mediaId}`);
+  }, [state, router]);
 
   return (
     <main className="min-h-screen bg-neutral-950 px-4 py-10 text-white">
