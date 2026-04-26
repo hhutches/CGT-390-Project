@@ -148,6 +148,12 @@ export default function MediaActions({
         throw new Error("Please log in to add, rate, or review this.");
       }
 
+      const numericMediaId = Number(mediaId);
+
+      if (!Number.isInteger(numericMediaId) || numericMediaId <= 0) {
+        throw new Error("Invalid media item.");
+      }
+
       const response = await fetch("/api/entries", {
         method: "POST",
         headers: {
@@ -155,7 +161,7 @@ export default function MediaActions({
         },
         body: JSON.stringify({
           userId: currentUser.id,
-          mediaId: Number(mediaId),
+          mediaId: numericMediaId,
           status: nextStatus,
           ratingValue: rating || null,
           reviewText: review.trim() || null,
@@ -308,7 +314,7 @@ export default function MediaActions({
           id="review-text"
           value={review}
           onChange={(event) => setReview(event.target.value)}
-          rows={3}
+          rows={2}
           disabled={!currentUser || saving}
           placeholder={copy.placeholder}
           style={{
