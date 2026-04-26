@@ -142,6 +142,8 @@ export default function MediaActions({
 
       setStatus(nextStatus);
       setMessage("Saved.");
+
+      window.location.reload();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Failed to save.");
     } finally {
