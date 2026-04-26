@@ -91,13 +91,25 @@ export default function MediaActions({
     setMessage("");
 
     try {
+      const numericMediaId = Number(
+        typeof mediaId !== "undefined" && mediaId
+          ? mediaId
+          : typeof window !== "undefined"
+            ? window.location.pathname.split("/").filter(Boolean).pop()
+            : ""
+      );
+
+      if (!Number.isInteger(numericMediaId) || numericMediaId <= 0) {
+        throw new Error("Invalid media item.");
+      }
+
       const response = await fetch("/api/entries", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          mediaId: Number(mediaId),
+          mediaId: numericMediaId,
           status: nextStatus,
           ratingValue: rating || null,
           reviewText: review.trim() || null,
@@ -171,7 +183,7 @@ export default function MediaActions({
 
       <div style={{ marginTop: 18 }}>
         <label
-          htmlFor="rating-slider"
+          
           style={{
             display: "block",
             fontWeight: 700,
@@ -180,33 +192,7 @@ export default function MediaActions({
         >
           Rating: {rating ? `${rating}/10` : "No rating"}
         </label>
-
-        <input
-          id="rating-slider"
-          type="range"
-          min="0"
-          max="10"
-          step="1"
-          value={rating}
-          onChange={(event) => setRating(Number(event.target.value))}
-          style={{ display: "block", width: "100%" }}
-        />
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 12,
-            color: "#666",
-            marginTop: 4,
-          }}
-        >
-          <span>0</span>
-          <span>5</span>
-          <span>10</span>
-        </div>
-
-        <div
+<div
           style={{
             display: "flex",
             gap: 6,
@@ -251,7 +237,7 @@ export default function MediaActions({
           id="review-text"
           value={review}
           onChange={(event) => setReview(event.target.value)}
-          rows={5}
+          rows={2}
           placeholder={copy.placeholder}
           style={{
             display: "block",
@@ -262,7 +248,7 @@ export default function MediaActions({
             border: "1px solid #ccc",
             font: "inherit",
             lineHeight: 1.45,
-            resize: "vertical",
+            resize: "none",
             background: "white",
           }}
         />

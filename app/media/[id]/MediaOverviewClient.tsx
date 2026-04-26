@@ -326,7 +326,7 @@ export default function MediaActions({
             border: "1px solid #ccc",
             font: "inherit",
             lineHeight: 1.4,
-            resize: "vertical",
+            resize: "none",
             background: !currentUser ? "#f6f6f6" : "white",
           }}
         />
