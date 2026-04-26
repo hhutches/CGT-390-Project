@@ -383,7 +383,6 @@ export default async function MediaPage({ params }: Props) {
   }
 
   const tmdbExtras = await getTmdbExtras(media);
-  const currentUserEntry = media.entries[0] ?? null;
 
   const ratings = media.entries
     .map((entry: any) => entry.ratingValue)
@@ -548,16 +547,7 @@ export default async function MediaPage({ params }: Props) {
         <MediaActions
           mediaId={String(media.id)}
           mediaType={media.type}
-          existingEntry={
-            currentUserEntry
-              ? {
-                  id: String(currentUserEntry.id),
-                  status: currentUserEntry.status,
-                  rating: currentUserEntry.ratingValue,
-                  review: currentUserEntry.reviewText,
-                }
-              : null
-          }
+          existingEntry={null}
         />
       </section>
 

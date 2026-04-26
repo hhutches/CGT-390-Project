@@ -548,6 +548,44 @@ function getBadTextPenalty(value: string | null | undefined) {
   if (text.includes("sketch comedy")) penalty -= 650;
   if (text.includes("celebrity")) penalty -= 600;
   if (text.includes("archive footage")) penalty -= 600;
+  
+  if (text.includes("sexy")) penalty -= 10000;
+  if (text.includes("erotic")) penalty -= 10000;
+  if (text.includes("erotica")) penalty -= 10000;
+  if (text.includes("porn")) penalty -= 10000;
+  if (text.includes("adult film")) penalty -= 10000;
+  if (text.includes("adult movie")) penalty -= 10000;
+  if (text.includes("fetish")) penalty -= 10000;
+  if (text.includes("babes")) penalty -= 8500;
+  if (text.includes("ecstasy")) penalty -= 7000;
+  if (text.includes("softcore")) penalty -= 10000;
+  if (text.includes("stripper")) penalty -= 9000;
+  if (text.includes("seduce")) penalty -= 8000;
+  if (text.includes("seduces")) penalty -= 8000;
+  if (text.includes("seduction")) penalty -= 8000;
+  if (text.includes("tribute")) penalty -= 1000;
+  if (text.includes("tributes")) penalty -= 1000;
+  if (text.includes("lullaby")) penalty -= 900;
+  if (text.includes("rendition")) penalty -= 800;
+  if (text.includes("karaoke")) penalty -= 900;
+  if (text.includes("smooth jazz")) penalty -= 900;
+  if (text.includes("smooth sax")) penalty -= 900;
+  if (text.includes("string quartet")) penalty -= 850;
+  if (text.includes("piano tribute")) penalty -= 850;
+  if (text.includes("8 bit")) penalty -= 700;
+  if (text.includes("8bit")) penalty -= 700;
+  if (text.includes("cover band")) penalty -= 700;
+  if (text.includes("calendar")) penalty -= 650;
+  if (text.includes("unauthorized")) penalty -= 350;
+  if (text.includes("interview")) penalty -= 450;
+  if (text.includes("documentary")) penalty -= 300;
+  if (text.includes("talk show")) penalty -= 1400;
+  if (text.includes("late night")) penalty -= 1300;
+  if (text.includes("reality")) penalty -= 1000;
+  if (text.includes("variety show")) penalty -= 1000;
+  if (text.includes("sketch comedy")) penalty -= 650;
+  if (text.includes("celebrity")) penalty -= 600;
+  if (text.includes("archive footage")) penalty -= 600;
 
   return penalty;
 }
@@ -810,9 +848,11 @@ function getLaneBoost(type: string, source: string, profile: QueryProfile) {
     if (type === "ALBUM" && source.includes("title")) boost += 1200;
     if (type === "GAME") boost -= 1900;
     if (type === "BOOK") boost -= 700;
+
     if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
       boost -= 1400;
     }
+
     if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
       boost -= 900;
     }
@@ -820,22 +860,29 @@ function getLaneBoost(type: string, source: string, profile: QueryProfile) {
 
   if (profile.likelyFilmTvPerson) {
     if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
-     boost += profile.likelyAuthor ? 2600 : 5200;
-   }
+      boost += profile.likelyAuthor ? 2600 : 5200;
+    }
 
-     if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
-     boost += 500;
-   }
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("title")) {
+      boost += 500;
+    }
 
     if (type === "ALBUM") boost -= 9000;
     if (type === "BOOK" && !profile.likelyAuthor) boost -= 1000;
     if (type === "GAME") boost -= 1200;
-   }
+  }
 
-    if (profile.likelyAuthor) {
+  if (profile.likelyAuthor) {
+    if (type === "BOOK" && source.includes("author")) boost += 5200;
+    if (type === "BOOK" && source.includes("title")) boost += 2200;
+    if (type === "BOOK" && source.includes("combined")) boost += 2600;
 
-    if (type === "ALBUM") boost -= 700;
-    if (type === "GAME") boost -= 400;
+    if ((type === "MOVIE" || type === "SHOW") && source.includes("person")) {
+      boost -= profile.likelyFilmTvPerson ? 600 : 1200;
+    }
+
+    if (type === "ALBUM") boost -= 1200;
+    if (type === "GAME") boost -= 600;
   }
 
   if (profile.likelyGameQuery) {
@@ -1019,11 +1066,68 @@ function hasCreativeCreditInSubtitle(subtitle: string) {
   );
 }
 
+function isUnsafeOrAdultishResult(result: SearchResult) {
+  const text = normalizeText(`${result.title} ${result.subtitle} ${result.source}`);
+
+  const blockedTerms = [
+
+    "erotic",
+    "erotica",
+    "porn",
+    "adult film",
+    "adult movie",
+    "fetish",
+    "softcore",
+    "stripper",
+    "seduce",
+    "seduces",
+    "seduction",
+  ];
+
+  return blockedTerms.some((term) => text.includes(term));
+}
+
+function hasStrongNonPersonTitleResults(results: SearchResult[], query: string) {
+  const q = normalizeText(query);
+
+  return results.some((result) => {
+    if (result.source.includes("person")) return false;
+
+    const title = normalizeText(result.title);
+
+    if (title !== q) return false;
+
+    return (
+      result.type === "BOOK" ||
+      result.type === "MOVIE" ||
+      result.type === "SHOW" ||
+      result.type === "ALBUM" ||
+      result.type === "GAME"
+    );
+  });
+}
+
 function shouldKeepResult(
   result: SearchResult,
   query: string,
   profile: QueryProfile
 ) {
+  if (isUnsafeOrAdultishResult(result)) {
+    return false;
+  }
+
+  // For single-word title searches like "twilight", "crash", or "burial",
+  // do not let random same-name people from TMDB person search pollute results.
+  // Legit film/TV person searches like "david lynch" still work because those
+  // are not single-word title queries and profile.likelyFilmTvPerson is true.
+  if (
+    isSingleWordQuery(query) &&
+    result.source.includes("TMDB person") &&
+    !profile.likelyFilmTvPerson
+  ) {
+    return false;
+  }
+
   if (
     (result.source.includes("title search") || result.source === "RAWG") &&
     isWeakSingleWordLeak(query, result.title)
@@ -1503,15 +1607,28 @@ export async function GET(request: NextRequest) {
         })),
     ];
 
-    const sortedResults = addUnique(
-      applyProfileAndCaps(rawResults, profile).filter((result) =>
-        shouldKeepResult(result, query, profile)
-      )
-    )
-      .sort((a, b) => b.rank - a.rank)
-      .slice(0, 50)
-      .map(({ rank, ...item }) => item);
+    const rankedResults = applyProfileAndCaps(rawResults, profile);
 
+const hasStrongTitle = hasStrongNonPersonTitleResults(rankedResults, query);
+
+const sortedResults = addUnique(
+  rankedResults.filter((result) => {
+    if (!shouldKeepResult(result, query, profile)) return false;
+
+    if (
+      hasStrongTitle &&
+      isSingleWordQuery(query) &&
+      result.source.includes("TMDB person")
+    ) {
+      return false;
+    }
+
+    return true;
+  })
+)
+  .sort((a, b) => b.rank - a.rank)
+  .slice(0, 50)
+  .map(({ rank, ...item }) => item);
     return NextResponse.json({ results: sortedResults });
   } catch (error) {
     console.error("Universal search error:", error);
