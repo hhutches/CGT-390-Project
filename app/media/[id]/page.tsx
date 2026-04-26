@@ -1,3 +1,4 @@
+import MediaActions from "@/app/components/MediaActions";
 import { getMediaById } from "@/lib/media";
 import { notFound } from "next/navigation";
 
@@ -5,6 +6,23 @@ type Props = {
   params: Promise<{
     id: string;
   }>;
+};
+
+type TmdbPerson = {
+  id: number | string;
+  name: string;
+  role: string;
+  imageUrl: string | null;
+};
+
+type TmdbExtras = {
+  trailer: {
+    key: string;
+    name: string;
+    url: string;
+  } | null;
+  directors: TmdbPerson[];
+  cast: TmdbPerson[];
 };
 
 function getYear(date: Date | string | null) {
@@ -147,6 +165,209 @@ function MediaCoverDisplay({ media }: { media: any }) {
   );
 }
 
+function getTmdbExternalRef(media: any) {
+  return media.externalRefs?.find((ref: any) => {
+    const provider = String(ref.provider).toUpperCase();
+    return provider === "TMDB";
+  });
+}
+
+async function getTmdbExtras(media: any): Promise<TmdbExtras> {
+  const tmdbRef = getTmdbExternalRef(media);
+
+  if (!tmdbRef || (media.type !== "MOVIE" && media.type !== "SHOW")) {
+    return {
+      trailer: null,
+      directors: [],
+      cast: [],
+    };
+  }
+
+  const token = process.env.TMDB_ACCESS_TOKEN;
+
+  if (!token) {
+    return {
+      trailer: null,
+      directors: [],
+      cast: [],
+    };
+  }
+
+  const kind = media.type === "SHOW" ? "tv" : "movie";
+  const tmdbId = tmdbRef.externalId;
+
+  async function tmdbFetch(path: string) {
+    const res = await fetch(`https://api.themoviedb.org/3/${path}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+
+    return res.json();
+  }
+
+  const [videos, credits] = await Promise.all([
+    tmdbFetch(`${kind}/${tmdbId}/videos?language=en-US`),
+    tmdbFetch(`${kind}/${tmdbId}/credits?language=en-US`),
+  ]);
+
+  const trailer =
+    videos?.results?.find(
+      (video: any) =>
+        video.site === "YouTube" &&
+        video.type === "Trailer" &&
+        video.official
+    ) ||
+    videos?.results?.find(
+      (video: any) => video.site === "YouTube" && video.type === "Trailer"
+    ) ||
+    videos?.results?.find((video: any) => video.site === "YouTube") ||
+    null;
+
+  const directors =
+    credits?.crew
+      ?.filter((person: any) => {
+        const job = String(person.job || "").toLowerCase();
+        const department = String(person.department || "").toLowerCase();
+
+        return (
+          job === "director" ||
+          job === "creator" ||
+          department === "directing"
+        );
+      })
+      .map((person: any) => ({
+        id: person.id,
+        name: person.name,
+        role: person.job || "Director",
+        imageUrl: person.profile_path
+          ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+          : null,
+      })) ?? [];
+
+  const cast =
+    credits?.cast
+      ?.sort((a: any, b: any) => (a.order ?? 999) - (b.order ?? 999))
+      .slice(0, 18)
+      .map((person: any) => ({
+        id: person.id,
+        name: person.name,
+        role: person.character || "Cast",
+        imageUrl: person.profile_path
+          ? `https://image.tmdb.org/t/p/w185${person.profile_path}`
+          : null,
+      })) ?? [];
+
+  return {
+    trailer: trailer?.key
+      ? {
+          key: trailer.key,
+          name: trailer.name || "Trailer",
+          url: `https://www.youtube.com/embed/${trailer.key}`,
+        }
+      : null,
+    directors,
+    cast,
+  };
+}
+
+function PersonScroller({
+  title,
+  people,
+}: {
+  title: string;
+  people: TmdbPerson[];
+}) {
+  if (people.length === 0) return null;
+
+  return (
+    <section style={{ marginTop: 30 }}>
+      <h2>{title}</h2>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          overflowX: "auto",
+          paddingBottom: 12,
+        }}
+      >
+        {people.map((person) => (
+          <div
+            key={`${person.id}-${person.role}`}
+            style={{
+              width: 130,
+              flex: "0 0 auto",
+              border: "1px solid #ccc",
+              borderRadius: 10,
+              padding: 10,
+              background: "white",
+            }}
+          >
+            <div
+              style={{
+                width: "100%",
+                height: 160,
+                borderRadius: 8,
+                background: "#eee",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+              }}
+            >
+              {person.imageUrl ? (
+                <img
+                  src={person.imageUrl}
+                  alt={person.name}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              ) : (
+                "No image"
+              )}
+            </div>
+
+            <strong
+              style={{
+                display: "block",
+                marginTop: 8,
+                fontSize: 14,
+                lineHeight: 1.2,
+              }}
+            >
+              {person.name}
+            </strong>
+
+            {person.role && (
+              <span
+                style={{
+                  display: "block",
+                  marginTop: 4,
+                  fontSize: 12,
+                  color: "#666",
+                  lineHeight: 1.2,
+                }}
+              >
+                {person.role}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default async function MediaPage({ params }: Props) {
   const { id } = await params;
   const mediaId = Number(id);
@@ -161,13 +382,17 @@ export default async function MediaPage({ params }: Props) {
     notFound();
   }
 
+  const tmdbExtras = await getTmdbExtras(media);
+  const currentUserEntry = media.entries[0] ?? null;
+
   const ratings = media.entries
-    .map((entry) => entry.ratingValue)
-    .filter((rating): rating is number => rating !== null);
+    .map((entry: any) => entry.ratingValue)
+    .filter((rating: number | null): rating is number => rating !== null);
 
   const averageRating =
     ratings.length > 0
-      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+      ? ratings.reduce((sum: number, rating: number) => sum + rating, 0) /
+        ratings.length
       : null;
 
   const releaseYear = getYear(media.releaseDate);
@@ -285,14 +510,14 @@ export default async function MediaPage({ params }: Props) {
             {media.genres.length > 0 && (
               <p>
                 <strong>Genres:</strong>{" "}
-                {media.genres.map((item) => item.genre.name).join(", ")}
+                {media.genres.map((item: any) => item.genre.name).join(", ")}
               </p>
             )}
 
             {media.externalRefs.length > 0 && (
               <p>
                 <strong>External source:</strong>{" "}
-                {media.externalRefs.map((ref) => ref.provider).join(", ")}
+                {media.externalRefs.map((ref: any) => ref.provider).join(", ")}
               </p>
             )}
 
@@ -300,8 +525,8 @@ export default async function MediaPage({ params }: Props) {
               <p>
                 <strong>External links:</strong>{" "}
                 {media.externalRefs
-                  .filter((ref) => ref.externalUrl)
-                  .map((ref, index) => (
+                  .filter((ref: any) => ref.externalUrl)
+                  .map((ref: any, index: number) => (
                     <span key={ref.id}>
                       {index > 0 && ", "}
                       <a
@@ -316,8 +541,67 @@ export default async function MediaPage({ params }: Props) {
               </p>
             )}
           </div>
+
+          <div style={{ marginTop: 30 }}>
+            <MediaActions
+              mediaId={String(media.id)}
+              mediaType={media.type}
+              existingEntry={
+                currentUserEntry
+                  ? {
+                      id: String(currentUserEntry.id),
+                      status: currentUserEntry.status,
+                      rating: currentUserEntry.ratingValue,
+                      review: currentUserEntry.reviewText,
+                    }
+                  : null
+              }
+            />
+          </div>
         </div>
       </section>
+
+      {(media.type === "MOVIE" || media.type === "SHOW") && (
+        <>
+          <section style={{ marginTop: 40 }}>
+            <h2>Trailer</h2>
+
+            {tmdbExtras.trailer ? (
+              <div
+                style={{
+                  aspectRatio: "16 / 9",
+                  width: "100%",
+                  maxWidth: 900,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: "1px solid #ccc",
+                  background: "black",
+                }}
+              >
+                <iframe
+                  src={tmdbExtras.trailer.url}
+                  title={tmdbExtras.trailer.name}
+                  allowFullScreen
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    border: 0,
+                  }}
+                />
+              </div>
+            ) : (
+              <p>No trailer available.</p>
+            )}
+          </section>
+
+          <PersonScroller
+            title="Director / Creator"
+            people={tmdbExtras.directors}
+          />
+
+          <PersonScroller title="Main Cast" people={tmdbExtras.cast} />
+        </>
+      )}
 
       <hr style={{ margin: "40px 0" }} />
 
@@ -342,7 +626,7 @@ export default async function MediaPage({ params }: Props) {
         {media.entries.length === 0 ? (
           <p>No one has logged this yet.</p>
         ) : (
-          media.entries.map((entry) => (
+          media.entries.map((entry: any) => (
             <article
               key={entry.id}
               style={{
