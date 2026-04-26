@@ -38,7 +38,9 @@ async function tmdbFetch(path: string) {
 
   const response = await fetch(url.toString(), {
     headers,
-    cache: "no-store",
+    next: {
+      revalidate: 3600,
+    },
   });
 
   if (!response.ok) {
@@ -51,15 +53,26 @@ async function tmdbFetch(path: string) {
 
 export async function GET() {
   try {
-    const data = await tmdbFetch("trending/movie/week?language=en-US");
-    const movies: TmdbMovie[] = Array.isArray(data?.results)
-      ? data.results
-      : [];
+    const pages = await Promise.all([
+      tmdbFetch("trending/movie/week?language=en-US&page=1"),
+      tmdbFetch("trending/movie/week?language=en-US&page=2"),
+    ]);
+
+    const movies: TmdbMovie[] = pages.flatMap((page) =>
+      Array.isArray(page?.results) ? page.results : []
+    );
+
+    const seen = new Set<number>();
 
     const popularMovies = movies
       .filter((movie) => movie.id && movie.title)
+      .filter((movie) => {
+        if (seen.has(movie.id)) return false;
+        seen.add(movie.id);
+        return true;
+      })
       .filter((movie) => (movie.vote_count ?? 0) >= 100)
-      .slice(0, 20)
+      .slice(0, 40)
       .map((movie, index) => {
         const rating =
           typeof movie.vote_average === "number"
