@@ -63,6 +63,12 @@ type TmdbMediaResult = {
   creditReason?: string | null;
 };
 
+type CombinedTmdbMediaResult = TmdbMediaResult & {
+  _combinedTitlePart?: string;
+  _combinedPersonPart?: string;
+  _combinedMatchKind?: "exact" | "person-context" | "title-context";
+};
+
 type GoogleBookResult = {
   provider: "GOOGLE_BOOKS";
   externalId: string;
@@ -397,6 +403,127 @@ async function fetchCombinedBookResults(request: NextRequest, query: string) {
   }
 
   return allResults;
+}
+
+function getCombinedMediaQueryParts(query: string) {
+  const words = normalizeText(query).split(" ").filter(Boolean);
+
+  if (words.length < 3) return [];
+
+  const parts: Array<{ titlePart: string; personPart: string }> = [];
+  const seen = new Set<string>();
+
+  for (let splitIndex = 1; splitIndex < words.length; splitIndex += 1) {
+    const left = words.slice(0, splitIndex).join(" ");
+    const right = words.slice(splitIndex).join(" ");
+
+    const candidates = [
+      { titlePart: left, personPart: right },
+      { titlePart: right, personPart: left },
+    ];
+
+    for (const candidate of candidates) {
+      if (candidate.titlePart.length < 2 || candidate.personPart.length < 4) {
+        continue;
+      }
+
+      const key = `${candidate.titlePart}:${candidate.personPart}`;
+
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      parts.push(candidate);
+    }
+  }
+
+  return parts.slice(0, 8);
+}
+
+async function fetchCombinedTmdbResults(request: NextRequest, query: string) {
+  const parts = getCombinedMediaQueryParts(query);
+
+  if (parts.length === 0) return [];
+
+  const results: CombinedTmdbMediaResult[] = [];
+  const seen = new Set<string>();
+
+  for (const part of parts) {
+    const [
+      titleMovies,
+      titleShows,
+      personMovies,
+      personShows,
+    ] = await Promise.all([
+      fetchTmdbTitleResults(request, part.titlePart, "movie"),
+      fetchTmdbTitleResults(request, part.titlePart, "tv"),
+      fetchTmdbPersonWorks(request, part.personPart, "movie"),
+      fetchTmdbPersonWorks(request, part.personPart, "tv"),
+    ]);
+
+    const titleResults = [...titleMovies, ...titleShows];
+    const personResults = [...personMovies, ...personShows];
+
+    const personIds = new Set(
+      personResults.map((item) => `${item.type}:${item.externalId}`)
+    );
+
+    const exactMatches = titleResults.filter((item) =>
+      personIds.has(`${item.type}:${item.externalId}`)
+    );
+
+    if (exactMatches.length === 0) {
+      continue;
+    }
+
+    for (const item of exactMatches) {
+      const key = `exact:${item.type}:${item.externalId}:${part.titlePart}:${part.personPart}`;
+
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+
+      results.push({
+        ...item,
+        _combinedTitlePart: part.titlePart,
+        _combinedPersonPart: part.personPart,
+        _combinedMatchKind: "exact",
+      });
+    }
+
+    for (const item of personResults.slice(0, 6)) {
+      const key = `person:${item.type}:${item.externalId}:${part.personPart}`;
+
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+
+      results.push({
+        ...item,
+        _combinedTitlePart: part.titlePart,
+        _combinedPersonPart: part.personPart,
+        _combinedMatchKind: "person-context",
+      });
+    }
+
+    for (const item of titleResults.slice(0, 6)) {
+      const key = `title:${item.type}:${item.externalId}:${part.titlePart}`;
+
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+
+      results.push({
+        ...item,
+        _combinedTitlePart: part.titlePart,
+        _combinedPersonPart: part.personPart,
+        _combinedMatchKind: "title-context",
+      });
+    }
+
+    break;
+  }
+
+  return results;
 }
 
 async function fetchRawgGames(request: NextRequest, query: string) {
@@ -1199,6 +1326,7 @@ export async function GET(request: NextRequest) {
       bookAuthorResults,
       bookTitleResults,
       combinedBookResults,
+      combinedTmdbResults,
       rawgGames,
       tmdbTitleMovies,
       tmdbTitleShows,
@@ -1248,6 +1376,7 @@ export async function GET(request: NextRequest) {
       fetchGoogleBooks(request, query, "author"),
       fetchGoogleBooks(request, query, "title"),
       fetchCombinedBookResults(request, query),
+      fetchCombinedTmdbResults(request, query),
       fetchRawgGames(request, query),
       fetchTmdbTitleResults(request, query, "movie"),
       fetchTmdbTitleResults(request, query, "tv"),
@@ -1490,6 +1619,53 @@ export async function GET(request: NextRequest) {
           externalId: item.externalId,
           rank: bookRank(item, query, 850),
         })),
+
+      ...combinedTmdbResults.map((item) => {
+        const matchKind = item._combinedMatchKind || "exact";
+        const titlePart = item._combinedTitlePart || query;
+        const personPart = item._combinedPersonPart || query;
+
+        const baseRank =
+          matchKind === "exact"
+            ? 7600
+            : matchKind === "person-context"
+              ? 2300
+              : 2100;
+
+        const source =
+          matchKind === "exact"
+            ? "TMDB combined title/person match"
+            : matchKind === "person-context"
+              ? "TMDB related person result"
+              : "TMDB related title result";
+
+        return {
+          id: `tmdb-combined:${matchKind}:${item.type}:${item.externalId}`,
+          title: item.title,
+          subtitle: [
+            matchKind === "exact"
+              ? `${titlePart} + ${personPart}`
+              : matchKind === "person-context"
+                ? personPart
+                : titlePart,
+            yearFromDate(item.releaseDate),
+            item.creditReason || null,
+            item.voteCount ? `${item.voteCount} votes` : null,
+            item.description?.slice(0, 120),
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          type: item.type,
+          source,
+          href: importHref("TMDB", item.externalId, item.type),
+          coverUrl: item.coverUrl ?? null,
+          provider: "TMDB",
+          externalId: item.externalId,
+          rank:
+            tmdbRank(item, matchKind === "person-context" ? personPart : titlePart, baseRank) +
+            (matchKind === "exact" ? 3500 : 0),
+        };
+      }),
 
       ...rawgGames
         .filter((item) =>
