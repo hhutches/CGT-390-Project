@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 
-type MediaType = "MOVIE" | "SHOW" | "BOOK" | "ALBUM" | "GAME" | string;
-
 type Props = {
   mediaId: string;
-  mediaType: MediaType;
+  mediaType: string;
   existingEntry?: {
     id?: string;
     status?: string | null;
@@ -15,12 +13,12 @@ type Props = {
   } | null;
 };
 
-function getCopy(type: MediaType) {
+function getCopy(type: string) {
   if (type === "MOVIE") {
     return {
       wishlist: "Want to watch",
-      progress: "Watching",
-      done: "Watched",
+      inProgress: null,
+      completed: "Watched",
       review: "Review movie",
       placeholder: "What did you think of this movie?",
     };
@@ -29,8 +27,8 @@ function getCopy(type: MediaType) {
   if (type === "SHOW") {
     return {
       wishlist: "Want to watch",
-      progress: "Watching",
-      done: "Watched",
+      inProgress: "Watching",
+      completed: "Watched",
       review: "Review show",
       placeholder: "What did you think of this show?",
     };
@@ -39,8 +37,8 @@ function getCopy(type: MediaType) {
   if (type === "BOOK") {
     return {
       wishlist: "Want to read",
-      progress: "Reading",
-      done: "Read",
+      inProgress: "Reading",
+      completed: "Read",
       review: "Review book",
       placeholder: "What did you think of this book?",
     };
@@ -49,8 +47,8 @@ function getCopy(type: MediaType) {
   if (type === "ALBUM") {
     return {
       wishlist: "Want to listen",
-      progress: "Listening",
-      done: "Listened",
+      inProgress: null,
+      completed: "Listened",
       review: "Review album",
       placeholder: "What did you think of this album?",
     };
@@ -59,8 +57,8 @@ function getCopy(type: MediaType) {
   if (type === "GAME") {
     return {
       wishlist: "Want to play",
-      progress: "Playing",
-      done: "Played",
+      inProgress: "Playing",
+      completed: "Played",
       review: "Review game",
       placeholder: "What did you think of this game?",
     };
@@ -68,8 +66,8 @@ function getCopy(type: MediaType) {
 
   return {
     wishlist: "Want to check out",
-    progress: "In progress",
-    done: "Logged",
+    inProgress: "In progress",
+    completed: "Done",
     review: "Review",
     placeholder: "What did you think?",
   };
@@ -88,7 +86,7 @@ export default function MediaActions({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function saveEntry(nextStatus: string) {
+  async function save(nextStatus = status || "COMPLETED") {
     setSaving(true);
     setMessage("");
 
@@ -99,17 +97,17 @@ export default function MediaActions({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          mediaId,
+          mediaId: Number(mediaId),
           status: nextStatus,
-          rating,
-          review: review.trim(),
+          ratingValue: rating || null,
+          reviewText: review.trim() || null,
         }),
       });
 
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data?.error || "Failed to save.");
+        throw new Error(data?.error || "Failed to save entry.");
       }
 
       setStatus(nextStatus);
@@ -121,95 +119,176 @@ export default function MediaActions({
     }
   }
 
+  function StatusButton({
+    value,
+    label,
+  }: {
+    value: string;
+    label: string;
+  }) {
+    const active = status === value;
+
+    return (
+      <button
+        type="button"
+        disabled={saving}
+        onClick={() => save(value)}
+        style={{
+          padding: "9px 12px",
+          borderRadius: 8,
+          border: active ? "2px solid black" : "1px solid #ccc",
+          background: active ? "#f0f0f0" : "white",
+          fontWeight: active ? 700 : 500,
+          cursor: saving ? "not-allowed" : "pointer",
+        }}
+      >
+        {active ? "✓ " : ""}
+        {label}
+      </button>
+    );
+  }
+
   return (
-    <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-5">
-      <h2 className="text-xl font-semibold">Add / Log / Review</h2>
+    <section
+      style={{
+        border: "1px solid #ccc",
+        borderRadius: 12,
+        padding: 18,
+        background: "white",
+      }}
+    >
+      <h2 style={{ marginTop: 0, marginBottom: 12 }}>Add / Rate / Review</h2>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => saveEntry("WISHLIST")}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-            status === "WISHLIST"
-              ? "bg-white text-black"
-              : "bg-neutral-800 text-white hover:bg-neutral-700"
-          }`}
-        >
-          {copy.wishlist}
-        </button>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <StatusButton value="WISHLIST" label={copy.wishlist} />
 
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => saveEntry("IN_PROGRESS")}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-            status === "IN_PROGRESS"
-              ? "bg-white text-black"
-              : "bg-neutral-800 text-white hover:bg-neutral-700"
-          }`}
-        >
-          {copy.progress}
-        </button>
+        {copy.inProgress ? (
+          <StatusButton value="IN_PROGRESS" label={copy.inProgress} />
+        ) : null}
 
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => saveEntry("COMPLETED")}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-            status === "COMPLETED"
-              ? "bg-white text-black"
-              : "bg-neutral-800 text-white hover:bg-neutral-700"
-          }`}
-        >
-          {copy.done}
-        </button>
+        <StatusButton value="COMPLETED" label={copy.completed} />
       </div>
 
-      <div className="mt-5">
-        <label className="text-sm font-medium text-neutral-300">
-          Rating: {rating ? `${rating}/5` : "—"}
+      <div style={{ marginTop: 18 }}>
+        <label
+          htmlFor="rating-slider"
+          style={{
+            display: "block",
+            fontWeight: 700,
+            marginBottom: 8,
+          }}
+        >
+          Rating: {rating ? `${rating}/10` : "No rating"}
         </label>
 
-        <div className="mt-2 flex gap-1">
-          {[1, 2, 3, 4, 5].map((star) => (
+        <input
+          id="rating-slider"
+          type="range"
+          min="0"
+          max="10"
+          step="1"
+          value={rating}
+          onChange={(event) => setRating(Number(event.target.value))}
+          style={{ display: "block", width: "100%" }}
+        />
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 12,
+            color: "#666",
+            marginTop: 4,
+          }}
+        >
+          <span>0</span>
+          <span>5</span>
+          <span>10</span>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            flexWrap: "wrap",
+            marginTop: 10,
+          }}
+        >
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((value) => (
             <button
-              key={star}
+              key={value}
               type="button"
-              onClick={() => setRating(star)}
-              className="text-2xl"
-              aria-label={`${star} stars`}
+              onClick={() => setRating(value)}
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 999,
+                border: rating === value ? "2px solid black" : "1px solid #ccc",
+                background: rating === value ? "#f0f0f0" : "white",
+                fontWeight: rating === value ? 700 : 400,
+                cursor: "pointer",
+              }}
             >
-              {rating >= star ? "★" : "☆"}
+              {value}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="mt-5">
-        <label className="text-sm font-medium text-neutral-300">
+      <div style={{ marginTop: 18 }}>
+        <label
+          htmlFor="review-text"
+          style={{
+            display: "block",
+            fontWeight: 700,
+            marginBottom: 8,
+          }}
+        >
           {copy.review}
         </label>
 
         <textarea
+          id="review-text"
           value={review}
           onChange={(event) => setReview(event.target.value)}
+          rows={5}
           placeholder={copy.placeholder}
-          rows={4}
-          className="mt-2 w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-neutral-400"
+          style={{
+            display: "block",
+            width: "100%",
+            boxSizing: "border-box",
+            padding: 10,
+            borderRadius: 8,
+            border: "1px solid #ccc",
+            font: "inherit",
+            lineHeight: 1.45,
+            resize: "vertical",
+            background: "white",
+          }}
         />
       </div>
 
       <button
         type="button"
         disabled={saving}
-        onClick={() => saveEntry(status || "COMPLETED")}
-        className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-200 disabled:opacity-60"
+        onClick={() => save()}
+        style={{
+          marginTop: 14,
+          padding: "9px 12px",
+          borderRadius: 8,
+          border: "1px solid #222",
+          background: "black",
+          color: "white",
+          fontWeight: 700,
+          cursor: saving ? "not-allowed" : "pointer",
+        }}
       >
         {saving ? "Saving..." : "Save review/log"}
       </button>
 
-      {message ? <p className="mt-3 text-sm text-neutral-400">{message}</p> : null}
+      {message ? (
+        <p style={{ color: "#555", marginBottom: 0 }}>{message}</p>
+      ) : null}
     </section>
   );
 }

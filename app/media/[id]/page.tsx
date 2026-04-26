@@ -541,66 +541,57 @@ export default async function MediaPage({ params }: Props) {
               </p>
             )}
           </div>
-
-          <div style={{ marginTop: 30 }}>
-            <MediaActions
-              mediaId={String(media.id)}
-              mediaType={media.type}
-              existingEntry={
-                currentUserEntry
-                  ? {
-                      id: String(currentUserEntry.id),
-                      status: currentUserEntry.status,
-                      rating: currentUserEntry.ratingValue,
-                      review: currentUserEntry.reviewText,
-                    }
-                  : null
-              }
-            />
-          </div>
         </div>
       </section>
 
+      <section style={{ marginTop: 30 }}>
+        <MediaActions
+          mediaId={String(media.id)}
+          mediaType={media.type}
+          existingEntry={
+            currentUserEntry
+              ? {
+                  id: String(currentUserEntry.id),
+                  status: currentUserEntry.status,
+                  rating: currentUserEntry.ratingValue,
+                  review: currentUserEntry.reviewText,
+                }
+              : null
+          }
+        />
+      </section>
+
       {(media.type === "MOVIE" || media.type === "SHOW") && (
-        <>
-          <section style={{ marginTop: 40 }}>
-            <h2>Trailer</h2>
+        <section style={{ marginTop: 40 }}>
+          <h2>Trailer</h2>
 
-            {tmdbExtras.trailer ? (
-              <div
+          {tmdbExtras.trailer ? (
+            <div
+              style={{
+                aspectRatio: "16 / 9",
+                width: "100%",
+                maxWidth: 900,
+                borderRadius: 12,
+                overflow: "hidden",
+                border: "1px solid #ccc",
+                background: "black",
+              }}
+            >
+              <iframe
+                src={tmdbExtras.trailer.url}
+                title={tmdbExtras.trailer.name}
+                allowFullScreen
                 style={{
-                  aspectRatio: "16 / 9",
                   width: "100%",
-                  maxWidth: 900,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  border: "1px solid #ccc",
-                  background: "black",
+                  height: "100%",
+                  border: 0,
                 }}
-              >
-                <iframe
-                  src={tmdbExtras.trailer.url}
-                  title={tmdbExtras.trailer.name}
-                  allowFullScreen
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    border: 0,
-                  }}
-                />
-              </div>
-            ) : (
-              <p>No trailer available.</p>
-            )}
-          </section>
-
-          <PersonScroller
-            title="Director / Creator"
-            people={tmdbExtras.directors}
-          />
-
-          <PersonScroller title="Main Cast" people={tmdbExtras.cast} />
-        </>
+              />
+            </div>
+          ) : (
+            <p>No trailer available.</p>
+          )}
+        </section>
       )}
 
       <hr style={{ margin: "40px 0" }} />
@@ -619,6 +610,17 @@ export default async function MediaPage({ params }: Props) {
           <strong>Total entries:</strong> {media.entries.length}
         </p>
       </section>
+
+      {(media.type === "MOVIE" || media.type === "SHOW") && (
+        <>
+          <PersonScroller
+            title="Director / Creator"
+            people={tmdbExtras.directors}
+          />
+
+          <PersonScroller title="Main Cast" people={tmdbExtras.cast} />
+        </>
+      )}
 
       <section style={{ marginTop: 30 }}>
         <h2>Reviews</h2>
