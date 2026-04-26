@@ -17,6 +17,12 @@ type TmdbResult = {
   popularity?: number;
   vote_count?: number;
   vote_average?: number;
+  video?: boolean;
+};
+
+type ScoredTmdbResult = TmdbResult & {
+  _creditScore?: number;
+  _creditReason?: string;
 };
 
 type TmdbPersonResult = {
@@ -48,11 +54,6 @@ type TmdbCreditsResponse = {
       department?: string;
     }
   >;
-};
-
-type ScoredTmdbResult = TmdbResult & {
-  _creditScore?: number;
-  _creditReason?: string;
 };
 
 function normalizeSearchType(value: string | null): TmdbSearchType {
@@ -115,127 +116,120 @@ async function tmdbFetch<T>(path: string, params: Record<string, string>) {
   });
 
   if (!response.ok) {
-    let body = "";
-
-    try {
-      body = await response.text();
-    } catch {
-      body = "";
-    }
-
+    const body = await response.text().catch(() => "");
     throw new Error(
       `TMDB request failed with status ${response.status}${
-        body ? `: ${body}` : ""
-      }.`
+        body ? ` - ${body}` : ""
+      }`
     );
   }
 
   return response.json() as Promise<T>;
 }
 
-function getReleaseYear(item: TmdbResult) {
-  const date = item.release_date || item.first_air_date || "";
-  const year = Number(date.slice(0, 4));
+function getCrewCreditScore(item: {
+  job?: string;
+  department?: string;
+}) {
+  const job = normalizeText(item.job);
+  const department = normalizeText(item.department);
 
-  return Number.isNaN(year) ? null : year;
-}
+  if (job === "director") return { score: 2600, reason: "Director" };
+  if (job === "creator") return { score: 2600, reason: "Creator" };
+  if (job === "writer") return { score: 2300, reason: "Writer" };
+  if (job === "screenplay") return { score: 2300, reason: "Screenplay" };
+  if (job === "story") return { score: 2100, reason: "Story" };
+  if (job === "characters") return { score: 1900, reason: "Characters" };
 
-function getBasePopularityScore(item: TmdbResult) {
-  const popularity = item.popularity ?? 0;
-  const voteCount = item.vote_count ?? 0;
-  const voteAverage = item.vote_average ?? 0;
-
-  let score = 0;
-
-  score += popularity * 3;
-  score += Math.min(voteCount, 20000) / 12;
-
-  if (voteCount >= 1000) score += 500;
-  if (voteCount >= 3000) score += 700;
-  if (voteCount >= 8000) score += 900;
-
-  if (voteAverage >= 7 && voteCount >= 500) score += 150;
-  if (voteAverage >= 8 && voteCount >= 1000) score += 250;
-
-  const year = getReleaseYear(item);
-
-  if (year) {
-    if (year > 2028) score -= 500;
-    if (year >= 1960 && year <= 2028) score += 50;
+  if (department === "directing") {
+    return { score: 1800, reason: item.job || "Directing" };
   }
 
-  return score;
+  if (department === "writing") {
+    return { score: 1700, reason: item.job || "Writing" };
+  }
+
+  if (department === "production") {
+    return { score: 500, reason: item.job || "Production" };
+  }
+
+  return { score: 300, reason: item.job || item.department || "Crew" };
 }
 
-function getLowValueAppearancePenalty(item: TmdbResult) {
+function getCastCreditScore(item: {
+  character?: string;
+  order?: number;
+}) {
+  const order = item.order ?? 999;
+  const character = item.character?.trim();
+
+  if (order <= 2) {
+    return {
+      score: 1400,
+      reason: character ? `Cast: ${character}` : "Cast",
+    };
+  }
+
+  if (order <= 8) {
+    return {
+      score: 1100,
+      reason: character ? `Cast: ${character}` : "Cast",
+    };
+  }
+
+  return {
+    score: 700,
+    reason: character ? `Cast: ${character}` : "Cast",
+  };
+}
+
+function isUsefulCrewCredit(item: {
+  job?: string;
+  department?: string;
+}) {
+  const job = normalizeText(item.job);
+  const department = normalizeText(item.department);
+
+  return (
+    job === "director" ||
+    job === "creator" ||
+    job === "screenplay" ||
+    job === "writer" ||
+    job === "story" ||
+    job === "characters" ||
+    department === "directing" ||
+    department === "writing"
+  );
+}
+
+function shouldDropLowValuePersonCredit(item: ScoredTmdbResult) {
+  const creditReason = normalizeText(item._creditReason);
+  const voteCount = item.vote_count ?? 0;
+  const popularity = item.popularity ?? 0;
   const title = normalizeText(item.title || item.name);
   const overview = normalizeText(item.overview);
-  const text = `${title} ${overview}`;
 
-  let penalty = 0;
+  if (creditReason.includes("cast: self")) return true;
+  if (creditReason.includes("archive footage")) return true;
 
-  if (text.includes("talk show")) penalty -= 1600;
-  if (text.includes("late night")) penalty -= 1500;
-  if (text.includes("variety show")) penalty -= 1200;
-  if (text.includes("reality")) penalty -= 1000;
-  if (text.includes("celebrity")) penalty -= 800;
-  if (text.includes("sketch comedy")) penalty -= 650;
-  if (text.includes("interview")) penalty -= 600;
-  if (text.includes("documentary")) penalty -= 400;
-  if (title.includes("with ")) penalty -= 100;
+  if (overview.includes("talk show")) return true;
+  if (overview.includes("late night")) return true;
+  if (overview.includes("reality")) return true;
+  if (overview.includes("variety show")) return true;
 
-  return penalty;
+  if (title.includes("late night")) return true;
+  if (title.includes("jimmy kimmel")) return true;
+  if (title.includes("ellen degeneres")) return true;
+
+  const isMinorCast =
+    creditReason.includes("cast:") && (item._creditScore ?? 0) < 900;
+
+  if (isMinorCast && voteCount < 500 && popularity < 5) return true;
+
+  return false;
 }
 
-function getCrewCreditScore(job?: string, department?: string) {
-  const normalizedJob = normalizeText(job);
-  const normalizedDepartment = normalizeText(department);
-
-  if (normalizedJob === "director") return 3200;
-  if (normalizedJob === "creator") return 3100;
-  if (normalizedJob === "screenplay") return 2600;
-  if (normalizedJob === "writer") return 2500;
-  if (normalizedJob === "story") return 1900;
-  if (normalizedJob === "characters") return 1200;
-  if (normalizedJob === "executive producer") return 1000;
-
-  if (normalizedDepartment === "directing") return 2200;
-  if (normalizedDepartment === "writing") return 2100;
-
-  // Do not score generic production crew. Otherwise unrelated people with the
-  // same name can pull in false positives like production-assistant credits.
-  return 0;
-}
-
-function getCastCreditScore(order?: number) {
-  if (order === undefined || order === null) return 500;
-  if (order <= 0) return 1600;
-  if (order <= 2) return 1300;
-  if (order <= 5) return 950;
-  if (order <= 10) return 600;
-
-  return 250;
-}
-
-function mergeScoredWorks(items: ScoredTmdbResult[]) {
-  const byKey = new Map<string, ScoredTmdbResult>();
-
-  for (const item of items) {
-    const kind = item.media_type;
-    if (kind !== "movie" && kind !== "tv") continue;
-
-    const key = `${kind}:${item.id}`;
-    const existing = byKey.get(key);
-
-    if (!existing || (item._creditScore ?? 0) > (existing._creditScore ?? 0)) {
-      byKey.set(key, item);
-    }
-  }
-
-  return Array.from(byKey.values());
-}
-
-function toMediaResult(item: ScoredTmdbResult, type: TmdbSearchType) {
+function toMediaResult(item: TmdbResult, type: TmdbSearchType) {
   const imageBase = getImageBase();
   const kind = getKind(item, type);
   const isMovie = kind === "movie";
@@ -244,13 +238,13 @@ function toMediaResult(item: ScoredTmdbResult, type: TmdbSearchType) {
     return null;
   }
 
+  const scoredItem = item as ScoredTmdbResult;
+
   return {
     provider: "TMDB",
     externalId: String(item.id),
     type: isMovie ? "MOVIE" : "SHOW",
-    title: isMovie
-      ? item.title ?? "Untitled Movie"
-      : item.name ?? "Untitled Show",
+    title: isMovie ? item.title ?? "Untitled Movie" : item.name ?? "Untitled Show",
     description: item.overview ?? null,
     releaseDate: isMovie
       ? item.release_date ?? null
@@ -261,10 +255,63 @@ function toMediaResult(item: ScoredTmdbResult, type: TmdbSearchType) {
     popularity: item.popularity ?? 0,
     voteCount: item.vote_count ?? 0,
     voteAverage: item.vote_average ?? 0,
-    creditScore: item._creditScore ?? 0,
-    creditReason: item._creditReason ?? null,
+    creditScore: scoredItem._creditScore ?? 0,
+    creditReason: scoredItem._creditReason ?? null,
     raw: item,
   };
+}
+
+function scoreTitleResult(item: TmdbResult, query: string) {
+  const q = normalizeText(query);
+  const title = normalizeText(item.title || item.name);
+  const voteCount = item.vote_count ?? 0;
+  const popularity = item.popularity ?? 0;
+  const voteAverage = item.vote_average ?? 0;
+
+  let score = 0;
+
+  if (title === q) score += 3000;
+  else if (title.startsWith(q)) score += 1200;
+  else if (title.includes(q)) score += 700;
+
+  score += Math.log10(voteCount + 1) * 420;
+  score += Math.log10(popularity + 1) * 180;
+
+  if (voteAverage >= 7 && voteCount >= 500) score += 120;
+  if (voteAverage >= 8 && voteCount >= 1000) score += 180;
+  if (voteCount >= 1000) score += 300;
+  if (voteCount >= 3000) score += 350;
+  if (voteCount >= 8000) score += 450;
+
+  if (item.video) score -= 700;
+
+  return score;
+}
+
+function scorePersonWork(item: ScoredTmdbResult) {
+  const voteCount = item.vote_count ?? 0;
+  const popularity = item.popularity ?? 0;
+  const voteAverage = item.vote_average ?? 0;
+  const creditScore = item._creditScore ?? 0;
+
+  let score = creditScore;
+
+  score += Math.log10(voteCount + 1) * 420;
+  score += Math.log10(popularity + 1) * 180;
+
+  if (voteAverage >= 7 && voteCount >= 500) score += 120;
+  if (voteAverage >= 8 && voteCount >= 1000) score += 180;
+  if (voteCount >= 1000) score += 300;
+  if (voteCount >= 3000) score += 350;
+  if (voteCount >= 8000) score += 450;
+
+  if (item.video) score -= 600;
+
+  if (shouldDropLowValuePersonCredit(item)) {
+    score -= 5000;
+  }
+
+  return score;
 }
 
 async function searchByTitle(q: string, type: TmdbSearchType) {
@@ -280,59 +327,14 @@ async function searchByTitle(q: string, type: TmdbSearchType) {
       const kind = getKind(item, type);
       return kind === "movie" || kind === "tv";
     })
-    .map((item) => ({
-      ...item,
-      _creditScore: 0,
-      _creditReason: "title",
-    }))
     .map((item) => toMediaResult(item, type))
     .filter((item): item is NonNullable<typeof item> => Boolean(item))
     .sort((a, b) => {
-      const aScore =
-        (a.popularity ?? 0) * 3 +
-        Math.min(a.voteCount ?? 0, 20000) / 12 +
-        (a.voteAverage ?? 0) * 20;
-      const bScore =
-        (b.popularity ?? 0) * 3 +
-        Math.min(b.voteCount ?? 0, 20000) / 12 +
-        (b.voteAverage ?? 0) * 20;
+      const aRaw = a.raw as TmdbResult;
+      const bRaw = b.raw as TmdbResult;
 
-      return bScore - aScore;
+      return scoreTitleResult(bRaw, q) - scoreTitleResult(aRaw, q);
     });
-}
-
-function selectBestPeopleForQuery(
-  people: TmdbPersonResult[],
-  query: string
-): TmdbPersonResult[] {
-  const queryNormalized = normalizeText(query);
-
-  const exactPeople = people
-    .filter((person) => person.id)
-    .filter((person) => normalizeText(person.name) === queryNormalized)
-    .sort((a, b) => {
-      const aDepartment = normalizeText(a.known_for_department);
-      const bDepartment = normalizeText(b.known_for_department);
-
-      const aDepartmentBoost =
-        aDepartment === "directing" || aDepartment === "acting" ? 1000 : 0;
-      const bDepartmentBoost =
-        bDepartment === "directing" || bDepartment === "acting" ? 1000 : 0;
-
-      return (
-        (b.popularity ?? 0) +
-        bDepartmentBoost -
-        ((a.popularity ?? 0) + aDepartmentBoost)
-      );
-    });
-
-  const fallbackPeople = people
-    .filter((person) => person.id)
-    .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
-
-  return exactPeople.length > 0
-    ? exactPeople.slice(0, 1)
-    : fallbackPeople.slice(0, 1);
 }
 
 async function searchByPerson(q: string, type: TmdbSearchType) {
@@ -343,7 +345,11 @@ async function searchByPerson(q: string, type: TmdbSearchType) {
     page: "1",
   });
 
-  const people = selectBestPeopleForQuery(personData.results ?? [], q);
+  const people = (personData.results ?? [])
+    .filter((person) => person.id)
+    .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
+    .slice(0, 3);
+
   const allWorks: ScoredTmdbResult[] = [];
 
   for (const person of people) {
@@ -357,65 +363,74 @@ async function searchByPerson(q: string, type: TmdbSearchType) {
     const cast = credits.cast ?? [];
     const crew = credits.crew ?? [];
 
-    for (const item of cast) {
-      const kind = item.media_type;
+    for (const item of crew) {
+      if (!item.id) continue;
 
+      const kind = item.media_type;
       if (kind !== "movie" && kind !== "tv") continue;
+
+      if (!isUsefulCrewCredit(item)) continue;
+
+      const credit = getCrewCreditScore(item);
 
       allWorks.push({
         ...item,
-        _creditScore: getCastCreditScore(item.order),
-        _creditReason: item.character ? `cast: ${item.character}` : "cast",
+        _creditScore: credit.score,
+        _creditReason: credit.reason,
       });
     }
 
-    for (const item of crew) {
-      const kind = item.media_type;
+    for (const item of cast) {
+      if (!item.id) continue;
 
+      const kind = item.media_type;
       if (kind !== "movie" && kind !== "tv") continue;
 
-      const creditScore = getCrewCreditScore(item.job, item.department);
-
-      if (creditScore <= 0) continue;
+      const credit = getCastCreditScore(item);
 
       allWorks.push({
         ...item,
-        _creditScore: creditScore,
-        _creditReason: item.job || item.department || "crew",
+        _creditScore: credit.score,
+        _creditReason: credit.reason,
       });
     }
   }
 
   const wantedKind = type === "movie" ? "movie" : type === "tv" ? "tv" : null;
+  const bestByKey = new Map<string, ScoredTmdbResult>();
 
-  return mergeScoredWorks(allWorks)
-    .filter((item) => {
-      const kind = item.media_type;
+  for (const item of allWorks) {
+    const kind = item.media_type;
 
-      if (kind !== "movie" && kind !== "tv") return false;
-      if (wantedKind && kind !== wantedKind) return false;
+    if (kind !== "movie" && kind !== "tv") continue;
+    if (wantedKind && kind !== wantedKind) continue;
 
-      return true;
+    const key = `${kind}:${item.id}`;
+    const existing = bestByKey.get(key);
+
+    if (!existing || scorePersonWork(item) > scorePersonWork(existing)) {
+      bestByKey.set(key, item);
+    }
+  }
+
+  return [...bestByKey.values()]
+    .filter((item) => !shouldDropLowValuePersonCredit(item))
+    .map((item) => {
+      const mediaType: TmdbSearchType =
+        item.media_type === "movie" || item.media_type === "tv"
+          ? item.media_type
+          : type;
+
+      return toMediaResult(item, mediaType);
     })
-    .map((item) => toMediaResult(item, item.media_type ?? type))
     .filter((item): item is NonNullable<typeof item> => Boolean(item))
     .sort((a, b) => {
       const aRaw = a.raw as ScoredTmdbResult;
       const bRaw = b.raw as ScoredTmdbResult;
 
-      const aScore =
-        (aRaw._creditScore ?? 0) +
-        getBasePopularityScore(aRaw) +
-        getLowValueAppearancePenalty(aRaw);
-
-      const bScore =
-        (bRaw._creditScore ?? 0) +
-        getBasePopularityScore(bRaw) +
-        getLowValueAppearancePenalty(bRaw);
-
-      return bScore - aScore;
+      return scorePersonWork(bRaw) - scorePersonWork(aRaw);
     })
-    .slice(0, 30);
+    .slice(0, 25);
 }
 
 export async function GET(request: Request) {
