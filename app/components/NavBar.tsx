@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type CurrentUser = {
@@ -9,9 +11,11 @@ type CurrentUser = {
   avatarUrl?: string | null;
 };
 
+const AUTH_CACHE_KEY = "media_app_current_user_cache";
+
 function NavLink({ href, label }: { href: string; label: string }) {
   return (
-    <a
+    <Link
       href={href}
       style={{
         color: "inherit",
@@ -21,7 +25,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
       }}
     >
       {label}
-    </a>
+    </Link>
   );
 }
 
@@ -37,12 +41,46 @@ async function safeJson(res: Response) {
   }
 }
 
+function readCachedUser() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const cached = window.sessionStorage.getItem(AUTH_CACHE_KEY);
+
+    if (!cached) return null;
+
+    return JSON.parse(cached) as CurrentUser | null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedUser(user: CurrentUser | null) {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (user) {
+      window.sessionStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(user));
+    } else {
+      window.sessionStorage.removeItem(AUTH_CACHE_KEY);
+    }
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 export default function NavBar() {
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const router = useRouter();
+
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() =>
+    readCachedUser()
+  );
+  const [authChecked, setAuthChecked] = useState(false);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadCurrentUser() {
       try {
         const res = await fetch("/api/auth/me", {
@@ -50,20 +88,29 @@ export default function NavBar() {
         });
 
         const data = await safeJson(res);
+        const nextUser = res.ok && data?.user ? (data.user as CurrentUser) : null;
 
-        if (res.ok && data?.user) {
-          setCurrentUser(data.user);
-        } else {
-          setCurrentUser(null);
+        if (!cancelled) {
+          setCurrentUser(nextUser);
+          writeCachedUser(nextUser);
         }
       } catch {
-        setCurrentUser(null);
+        if (!cancelled) {
+          setCurrentUser(null);
+          writeCachedUser(null);
+        }
       } finally {
-        setLoaded(true);
+        if (!cancelled) {
+          setAuthChecked(true);
+        }
       }
     }
 
     loadCurrentUser();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
@@ -73,7 +120,7 @@ export default function NavBar() {
 
     if (!trimmed) return;
 
-    window.location.href = `/search?q=${encodeURIComponent(trimmed)}`;
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
 
   return (
@@ -132,11 +179,10 @@ export default function NavBar() {
           gap: 14,
           alignItems: "center",
           justifyContent: "flex-end",
+          minHeight: 22,
         }}
       >
-        {!loaded ? (
-          <span style={{ color: "#777" }}>Loading...</span>
-        ) : currentUser ? (
+        {currentUser ? (
           <>
             <NavLink
               href={`/profiles/${currentUser.username}`}
@@ -144,12 +190,12 @@ export default function NavBar() {
             />
             <NavLink href="/logout" label="Log Out" />
           </>
-        ) : (
+        ) : authChecked ? (
           <>
             <NavLink href="/login" label="Log In" />
             <NavLink href="/signup" label="Sign Up" />
           </>
-        )}
+        ) : null}
       </div>
     </nav>
   );
