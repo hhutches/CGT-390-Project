@@ -1,3 +1,4 @@
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { EntryStatus, LogEventType } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -36,11 +37,30 @@ function getEventType({
   return LogEventType.UPDATED;
 }
 
+function isEntryStatus(value: unknown): value is EntryStatus {
+  return (
+    value === EntryStatus.WISHLIST ||
+    value === EntryStatus.IN_PROGRESS ||
+    value === EntryStatus.COMPLETED ||
+    value === EntryStatus.PAUSED ||
+    value === EntryStatus.DROPPED
+  );
+}
+
 export async function POST(request: Request) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: "Please log in to add, rate, or review this." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
-    const userId = String(body.userId ?? "");
+    const userId = currentUser.id;
     const mediaId = Number(body.mediaId);
     const status = body.status as EntryStatus;
     const ratingValue =
@@ -52,26 +72,35 @@ export async function POST(request: Request) {
         ? body.reviewText.trim()
         : null;
 
-    if (!userId || !mediaId) {
+    if (!Number.isInteger(mediaId) || mediaId <= 0) {
       return NextResponse.json(
-        { error: "userId and mediaId are required." },
+        { error: "mediaId is required." },
         { status: 400 }
       );
     }
 
-    const user = await prisma.userProfile.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
+    if (!isEntryStatus(status)) {
       return NextResponse.json(
-        { error: "User profile not found." },
-        { status: 404 }
+        { error: "Valid status is required." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      ratingValue !== null &&
+      (!Number.isInteger(ratingValue) || ratingValue < 1 || ratingValue > 10)
+    ) {
+      return NextResponse.json(
+        { error: "Rating must be a whole number from 1 to 10." },
+        { status: 400 }
       );
     }
 
     const media = await prisma.mediaItem.findUnique({
       where: { id: mediaId },
+      select: {
+        id: true,
+      },
     });
 
     if (!media) {
@@ -87,6 +116,9 @@ export async function POST(request: Request) {
           userId,
           mediaId,
         },
+      },
+      select: {
+        id: true,
       },
     });
 
