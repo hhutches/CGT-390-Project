@@ -1859,7 +1859,7 @@ export async function GET(request: NextRequest) {
 
 const hasStrongTitle = hasStrongNonPersonTitleResults(rankedResults, query);
 
-const sortedResults = addUnique(
+let sortedResults = addUnique(
   rankedResults.filter((result) => {
     if (!shouldKeepResult(result, query, profile)) return false;
 
@@ -1877,7 +1877,56 @@ const sortedResults = addUnique(
   .sort((a, b) => b.rank - a.rank)
   .slice(0, 50)
   .map(({ rank, ...item }) => item);
-    return NextResponse.json({ results: sortedResults });
+        const externalResultsWithRefs = sortedResults.filter(
+      (item) =>
+        item.provider &&
+        item.provider !== "LOCAL" &&
+        item.externalId &&
+        ["TMDB", "GOOGLE_BOOKS", "MUSICBRAINZ", "SPOTIFY", "RAWG"].includes(
+          item.provider
+        )
+    );
+
+    if (externalResultsWithRefs.length > 0) {
+      const existingRefs = await prisma.mediaExternalRef.findMany({
+        where: {
+          OR: externalResultsWithRefs.map((item) => ({
+            provider: item.provider as any,
+            externalId: String(item.externalId),
+          })),
+        },
+        select: {
+          provider: true,
+          externalId: true,
+          mediaId: true,
+        },
+      });
+
+      const existingHrefByExternalRef = new Map(
+        existingRefs.map((ref) => [
+          `${ref.provider}:${ref.externalId}`,
+          `/media/${ref.mediaId}`,
+        ])
+      );
+
+      sortedResults = sortedResults.map((item) => {
+        if (!item.provider || !item.externalId) return item;
+
+        const existingHref = existingHrefByExternalRef.get(
+          `${item.provider}:${item.externalId}`
+        );
+
+        if (!existingHref) return item;
+
+        return {
+          ...item,
+          href: existingHref,
+          provider: "LOCAL",
+        };
+      });
+    }
+
+return NextResponse.json({ results: sortedResults });
   } catch (error) {
     console.error("Universal search error:", error);
 
