@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 async function safeJson(res: Response) {
   const text = await res.text();
@@ -18,6 +19,7 @@ async function safeJson(res: Response) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -58,7 +60,7 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = `/profiles/${data.user.username}`;
+      router.push(`/profiles/${data.user.username}`);
     } catch (error) {
       setMessage(
         JSON.stringify(
