@@ -883,13 +883,12 @@ export default function FeedPage() {
     }
   }
 
-  async function loadFeedForUser(userId: string, nextScope: FeedScope = scope) {
+  async function loadFeedForUser(nextScope: FeedScope = scope) {
     setLoading(true);
     setResult("");
 
     try {
       const params = new URLSearchParams({
-        userId,
         scope: nextScope,
       });
 
@@ -1042,27 +1041,37 @@ export default function FeedPage() {
       return;
     }
 
-    await loadFeedForUser(user.id, "all");
+    await loadFeedForUser("all");
   }
 
   function changeScope(nextScope: FeedScope) {
     setScope(nextScope);
 
+    if (nextScope === "popular") {
+      loadFeedForUser(nextScope);
+      return;
+    }
+
     if (!currentUser) {
       setResult("Please log in to use your feed.");
       return;
     }
 
-    loadFeedForUser(currentUser.id, nextScope);
+    loadFeedForUser(nextScope);
   }
 
   function refreshFeed() {
+    if (scope === "popular") {
+      loadFeedForUser(scope);
+      return;
+    }
+
     if (!currentUser) {
       setResult("Please log in to use your feed.");
       return;
     }
 
-    loadFeedForUser(currentUser.id, scope);
+    loadFeedForUser(scope);
   }
 
   useEffect(() => {

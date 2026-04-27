@@ -1,6 +1,9 @@
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { FriendshipStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+
+const FEED_LIMIT = 20;
 
 const feedMediaSelect = {
   id: true,
@@ -45,6 +48,17 @@ const feedMediaSelect = {
   },
 };
 
+function json(data: unknown, init?: ResponseInit) {
+  const headers = new Headers(init?.headers);
+
+  headers.set("Cache-Control", "private, no-store, max-age=0");
+
+  return NextResponse.json(data, {
+    ...init,
+    headers,
+  });
+}
+
 async function getFriendIds(userId: string) {
   const friendships = await prisma.friendship.findMany({
     where: {
@@ -64,35 +78,41 @@ async function getFriendIds(userId: string) {
 
 export async function GET(request: NextRequest) {
   try {
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return json({ error: "Not authenticated." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
-
-    const userId = searchParams.get("userId")?.trim() ?? null;
     const scope = searchParams.get("scope")?.trim() ?? "all";
+    const userId = currentUser.id;
 
-    let userFilter = {};
+    if (scope !== "all" && scope !== "me" && scope !== "friends") {
+      return json(
+        { error: "Invalid scope. Use all, friends, or me." },
+        { status: 400 }
+      );
+    }
+
+    let userFilter:
+      | {}
+      | {
+          userId: string | { in: string[] };
+        } = {};
 
     if (scope === "me") {
-      if (!userId) {
-        return NextResponse.json(
-          { error: "userId is required for scope=me." },
-          { status: 400 }
-        );
-      }
-
       userFilter = {
         userId,
       };
     }
 
     if (scope === "friends") {
-      if (!userId) {
-        return NextResponse.json(
-          { error: "userId is required for scope=friends." },
-          { status: 400 }
-        );
-      }
-
       const friendIds = await getFriendIds(userId);
+
+      if (friendIds.length === 0) {
+        return json([]);
+      }
 
       userFilter = {
         userId: {
@@ -101,15 +121,8 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    if (scope !== "all" && scope !== "me" && scope !== "friends") {
-      return NextResponse.json(
-        { error: "Invalid scope. Use all, friends, or me." },
-        { status: 400 }
-      );
-    }
-
     const events = await prisma.userMediaLogEvent.findMany({
-      take: 20,
+      take: FEED_LIMIT,
       where: userFilter,
       orderBy: {
         createdAt: "desc",
@@ -144,11 +157,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(events);
+    return json(events);
   } catch (error) {
     console.error("Feed route error:", error);
 
-    return NextResponse.json(
+    return json(
       {
         error: "Failed to load feed.",
         message: error instanceof Error ? error.message : String(error),
