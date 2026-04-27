@@ -244,24 +244,6 @@ export async function POST(request: Request) {
       );
     }
 
-        const existingExternalRef = await prisma.mediaExternalRef.findFirst({
-      where: {
-        provider: provider as any,
-        externalId: String(externalId),
-      },
-      include: {
-        media: true,
-      },
-    });
-
-    if (existingExternalRef?.media) {
-      return NextResponse.json({
-        media: existingExternalRef.media,
-        mediaId: existingExternalRef.media.id,
-        alreadyImported: true,
-      });
-    }
-
     const existing = await prisma.mediaExternalRef.findUnique({
       where: {
         provider_externalId: {
@@ -298,6 +280,8 @@ export async function POST(request: Request) {
           return NextResponse.json({
             imported: false,
             refreshed: true,
+            alreadyImported: true,
+            mediaId: media.id,
             media,
           });
         }
@@ -306,6 +290,8 @@ export async function POST(request: Request) {
       return NextResponse.json({
         imported: false,
         refreshed: false,
+        alreadyImported: true,
+        mediaId: existing.media.id,
         media: existing.media,
       });
     }
@@ -331,6 +317,9 @@ export async function POST(request: Request) {
         headers: {
           Authorization: `Bearer ${token}`,
           accept: "application/json",
+        },
+        next: {
+          revalidate: 86400,
         },
       });
 
@@ -452,7 +441,11 @@ export async function POST(request: Request) {
         url.searchParams.set("key", apiKey);
       }
 
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), {
+        next: {
+          revalidate: 86400,
+        },
+      });
 
       if (!response.ok) {
         let googleResponse: unknown = null;
@@ -624,7 +617,9 @@ export async function POST(request: Request) {
         headers: {
           Accept: "application/json",
         },
-        cache: "no-store",
+        next: {
+          revalidate: 86400,
+        },
       });
 
       if (!response.ok) {
