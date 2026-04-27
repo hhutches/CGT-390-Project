@@ -69,9 +69,7 @@ async function searchSpotifyAlbums(token: string, query: string) {
 
   url.searchParams.set("q", query);
   url.searchParams.set("type", "album");
-  url.searchParams.set("market", "US");
-  url.searchParams.set("limit", "20");
-  url.searchParams.set("offset", "0");
+  url.searchParams.set("limit", "10");
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -85,7 +83,13 @@ async function searchSpotifyAlbums(token: string, query: string) {
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`Spotify album search failed: ${response.status} ${body}`);
+    console.error(
+      "Spotify album search failed:",
+      response.status,
+      query,
+      body
+    );
+    return [];
   }
 
   const data = await response.json();
@@ -98,7 +102,6 @@ async function searchSpotifyAlbums(token: string, query: string) {
 export async function GET() {
   try {
     const token = await getSpotifyAccessToken();
-
     const currentYear = new Date().getFullYear();
 
     const queries = [
@@ -107,12 +110,14 @@ export async function GET() {
       `year:${currentYear - 2}`,
     ];
 
-    const pages = await Promise.all(
-      queries.map((query) => searchSpotifyAlbums(token, query))
-    );
+    const pages: SpotifyAlbum[][] = [];
+
+    for (const query of queries) {
+      const albums = await searchSpotifyAlbums(token, query);
+      pages.push(albums);
+    }
 
     const albums = pages.flat();
-
     const seen = new Set<string>();
 
     const popularAlbums = albums
@@ -124,7 +129,7 @@ export async function GET() {
         seen.add(album.id);
         return true;
       })
-      .slice(0, 40)
+      .slice(0, 30)
       .map((album, index) => {
         const artists =
           album.artists
@@ -177,14 +182,6 @@ export async function GET() {
   } catch (error) {
     console.error("Spotify popular new albums error:", error);
 
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load popular new albums.",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json([]);
   }
 }

@@ -623,18 +623,6 @@ export default function FeedPage() {
 
         if (!albumRes.ok || !Array.isArray(albumData)) {
           setPopularAlbumEvents([]);
-
-          setResult(
-            JSON.stringify(
-              {
-                status: albumRes.status,
-                error: "Failed to load popular albums.",
-                response: albumData,
-              },
-              null,
-              2
-            )
-          );
         } else {
           setPopularAlbumEvents(albumData);
         }
