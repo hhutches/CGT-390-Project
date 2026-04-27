@@ -71,6 +71,7 @@ async function searchSpotifyAlbums(token: string, query: string) {
   url.searchParams.set("type", "album");
   url.searchParams.set("market", "US");
   url.searchParams.set("limit", "20");
+  url.searchParams.set("offset", "0");
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -103,8 +104,7 @@ export async function GET() {
     const queries = [
       `year:${currentYear}`,
       `year:${currentYear - 1}`,
-      `tag:new`,
-      `album`,
+      `year:${currentYear - 2}`,
     ];
 
     const pages = await Promise.all(
@@ -117,7 +117,7 @@ export async function GET() {
 
     const popularAlbums = albums
       .filter((album) => album.id && album.name)
-      .filter((album) => album.album_type !== "single")
+      .filter((album) => album.album_type === "album")
       .filter((album) => {
         if (seen.has(album.id)) return false;
 
