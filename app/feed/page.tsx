@@ -981,6 +981,12 @@ export default function FeedPage() {
       const data = await safeJson(res);
 
       if (!res.ok || !data) {
+        if (res.status === 401) {
+          setResult("");
+          setEvents([]);
+          return;
+        }
+
         setResult(
           JSON.stringify(
             {
