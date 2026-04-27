@@ -10,7 +10,7 @@ type PopularItem = {
   id: string;
   title: string;
   type: string;
-  artist?: string | null;
+  imageUrl: string | null;
 };
 
 async function safeJson(res: Response) {
@@ -50,10 +50,12 @@ function getPopularItemsFromFeed(data: any, fallbackType: string): PopularItem[]
         id: String(media.externalId || media.id || event.id || media.title),
         title: String(media.title),
         type: String(media.type || fallbackType),
-        artist: media.albumDetails?.primaryArtistName || null,
+        imageUrl: media.coverUrl || null,
       };
     })
-    .filter(Boolean) as PopularItem[];
+    .filter((item: PopularItem | null): item is PopularItem =>
+      Boolean(item?.imageUrl)
+    );
 }
 
 export default function LoginPage() {
@@ -66,13 +68,6 @@ export default function LoginPage() {
     let cancelled = false;
 
     async function loadPopularItems() {
-      const fallbackItems: PopularItem[] = [
-        { id: "movie-1", title: "Popular Movies", type: "MOVIE" },
-        { id: "album-1", title: "New Albums", type: "ALBUM" },
-        { id: "tv-1", title: "Trending TV", type: "SHOW" },
-        { id: "game-1", title: "Popular Games", type: "GAME" },
-      ];
-
       try {
         const [moviesRes, albumsRes] = await Promise.allSettled([
           fetch("/api/feed/popular-this-week", { cache: "no-store" }),
@@ -91,21 +86,21 @@ export default function LoginPage() {
 
         const movieItems = getPopularItemsFromFeed(moviesData, "MOVIE").slice(
           0,
-          8
+          10
         );
         const albumItems = getPopularItemsFromFeed(albumsData, "ALBUM").slice(
           0,
-          8
+          10
         );
 
         const combined = [...movieItems, ...albumItems];
 
         if (!cancelled) {
-          setPopularItems(combined.length > 0 ? combined : fallbackItems);
+          setPopularItems(combined);
         }
       } catch {
         if (!cancelled) {
-          setPopularItems(fallbackItems);
+          setPopularItems([]);
         }
       }
     }
@@ -118,12 +113,7 @@ export default function LoginPage() {
   }, []);
 
   const tickerItems = useMemo(() => {
-    if (popularItems.length === 0) {
-      return [
-        { id: "loading-1", title: "Loading popular movies", type: "MOVIE" },
-        { id: "loading-2", title: "Loading popular albums", type: "ALBUM" },
-      ];
-    }
+    if (popularItems.length === 0) return [];
 
     return [...popularItems, ...popularItems];
   }, [popularItems]);
@@ -256,103 +246,68 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div
-            style={{
-              position: "relative",
-              zIndex: 1,
-              marginTop: 34,
-            }}
-          >
-            <p
-              style={{
-                margin: "0 0 10px",
-                color: "rgba(255,255,255,0.72)",
-                fontSize: 13,
-                fontWeight: 800,
-                letterSpacing: "0.02em",
-                textTransform: "uppercase",
-              }}
-            >
-              Popular this week
-            </p>
-
+          {tickerItems.length > 0 ? (
             <div
               style={{
-                border: "1px solid rgba(255,255,255,0.20)",
-                background: "rgba(255,255,255,0.10)",
-                borderRadius: 20,
-                padding: 12,
-                overflow: "hidden",
-                backdropFilter: "blur(14px)",
+                position: "relative",
+                zIndex: 1,
+                marginTop: 34,
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  width: "max-content",
-                  gap: 10,
-                  animation: "loginTickerScroll 28s linear infinite",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  background: "rgba(255,255,255,0.08)",
+                  borderRadius: 22,
+                  padding: 13,
+                  overflow: "hidden",
+                  backdropFilter: "blur(14px)",
+                  boxShadow: "0 18px 40px rgba(0,0,0,0.20)",
                 }}
               >
-                {tickerItems.map((item, index) => (
-                  <div
-                    key={`${item.id}-${index}`}
-                    style={{
-                      minWidth: 170,
-                      maxWidth: 220,
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      background: "rgba(0,0,0,0.20)",
-                      borderRadius: 16,
-                      padding: "10px 12px",
-                    }}
-                  >
-                    <span
+                <div
+                  style={{
+                    display: "flex",
+                    width: "max-content",
+                    gap: 12,
+                    animation: "loginTickerScroll 32s linear infinite",
+                  }}
+                >
+                  {tickerItems.map((item, index) => (
+                    <div
+                      key={`${item.id}-${index}`}
+                      title={item.title}
                       style={{
-                        display: "block",
-                        color: "rgba(255,255,255,0.58)",
-                        fontSize: 11,
-                        fontWeight: 900,
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                        marginBottom: 5,
-                      }}
-                    >
-                      {item.type === "ALBUM" ? "Album" : item.type === "SHOW" ? "TV" : item.type}
-                    </span>
-
-                    <strong
-                      style={{
-                        display: "block",
-                        fontSize: 14,
-                        lineHeight: 1.18,
-                        whiteSpace: "nowrap",
+                        width: item.type === "ALBUM" ? 96 : 84,
+                        height: item.type === "ALBUM" ? 96 : 126,
+                        flex: "0 0 auto",
+                        border: "1px solid rgba(255,255,255,0.20)",
+                        background: "rgba(0,0,0,0.24)",
+                        borderRadius: 14,
                         overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        boxShadow: "0 10px 22px rgba(0,0,0,0.22)",
                       }}
                     >
-                      {item.title}
-                    </strong>
-
-                    {item.artist ? (
-                      <span
-                        style={{
-                          display: "block",
-                          marginTop: 4,
-                          color: "rgba(255,255,255,0.62)",
-                          fontSize: 12,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {item.artist}
-                      </span>
-                    ) : null}
-                  </div>
-                ))}
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          loading="lazy"
+                          decoding="async"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div
