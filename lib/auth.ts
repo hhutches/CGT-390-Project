@@ -83,8 +83,22 @@ export async function getCurrentUser() {
     where: {
       id: sessionId,
     },
-    include: {
-      user: true,
+    select: {
+      id: true,
+      expiresAt: true,
+      user: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+          bio: true,
+          avatarUrl: true,
+          bannerUrl: true,
+          privacy: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
 
