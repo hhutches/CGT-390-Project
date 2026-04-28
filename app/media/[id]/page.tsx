@@ -492,12 +492,12 @@ export default async function MediaPage({ params }: Props) {
   ];
 
   return (
-    <main style={{ padding: "48px 56px", width: "100%", boxSizing: "border-box" }}>
+    <main style={{ padding: "34px 28px", width: "100%", boxSizing: "border-box" }}>
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(330px, 420px) minmax(0, 1fr)",
-          gap: 52,
+          gridTemplateColumns: "clamp(420px, 38vw, 620px) minmax(0, 1fr)",
+          gap: 34,
           alignItems: "stretch",
           width: "100%",
         }}
@@ -539,7 +539,7 @@ export default async function MediaPage({ params }: Props) {
                 alt={media.title}
                 style={{
                   display: "block",
-                  width: "min(100%, 620px)",
+                  width: "min(100%, 760px)",
                   maxHeight: 170,
                   objectFit: "contain",
                   objectPosition: "left center",
@@ -563,7 +563,7 @@ export default async function MediaPage({ params }: Props) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) minmax(190px, 260px)",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(210px, 280px)",
               gap: 34,
               alignItems: "start",
             }}
@@ -603,7 +603,7 @@ export default async function MediaPage({ params }: Props) {
                     lineHeight: 1.45,
                     fontSize: 20,
                     margin: "12px 0 0",
-                    maxWidth: 900,
+                    maxWidth: 1120,
                   }}
                 >
                   {media.description}
@@ -686,7 +686,7 @@ export default async function MediaPage({ params }: Props) {
               style={{
                 aspectRatio: "16 / 9",
                 width: "100%",
-                maxWidth: 900,
+                maxWidth: 1120,
                 borderRadius: 12,
                 overflow: "hidden",
                 border: "1px solid var(--app-border)",
