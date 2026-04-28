@@ -123,8 +123,7 @@ function MediaCoverDisplay({ media }: { media: any }) {
               src={media.coverUrl}
               alt={`${media.title} cover`}
               style={{
-                width: "100%",
-                height: "100%",
+                      height: "100%",
                 objectFit: "cover",
                 display: "block",
               }}
@@ -492,12 +491,12 @@ export default async function MediaPage({ params }: Props) {
   ];
 
   return (
-    <main style={{ padding: "34px 28px", width: "100%", boxSizing: "border-box" }}>
+    <main style={{ padding: "44px 48px", maxWidth: 1240, margin: "0 auto", boxSizing: "border-box" }}>
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "clamp(420px, 38vw, 620px) minmax(0, 1fr)",
-          gap: 34,
+          gridTemplateColumns: "360px minmax(0, 1fr)",
+          gap: 44,
           alignItems: "stretch",
           width: "100%",
         }}
@@ -539,8 +538,8 @@ export default async function MediaPage({ params }: Props) {
                 alt={media.title}
                 style={{
                   display: "block",
-                  width: "min(100%, 760px)",
-                  maxHeight: 170,
+                  width: "min(100%, 560px)",
+                  maxHeight: 150,
                   objectFit: "contain",
                   objectPosition: "left center",
                 }}
@@ -560,76 +559,68 @@ export default async function MediaPage({ params }: Props) {
             </h1>
           )}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) minmax(210px, 280px)",
-              gap: 34,
-              alignItems: "start",
-            }}
-          >
-            <div>
-              <div
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 18,
+                flexWrap: "wrap",
+              }}
+            >
+              <h2
                 style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: 18,
-                  flexWrap: "wrap",
+                  margin: 0,
+                  fontSize: 30,
+                  lineHeight: 1.05,
+                  letterSpacing: "-0.035em",
                 }}
               >
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: 28,
-                    lineHeight: 1,
-                    letterSpacing: "-0.035em",
-                  }}
-                >
-                  {releaseYear ? `${media.title} (${releaseYear})` : media.title}
-                </h2>
+                {releaseYear ? `${media.title} (${releaseYear})` : media.title}
+              </h2>
 
-                <MediaInfoRow media={media} />
-              </div>
-
-              {media.originalTitle && media.originalTitle !== media.title ? (
-                <p style={{ marginBottom: 8 }}>
-                  <strong>Original title:</strong> {media.originalTitle}
-                </p>
-              ) : null}
-
-              {media.description ? (
-                <p
-                  style={{
-                    lineHeight: 1.45,
-                    fontSize: 20,
-                    margin: "12px 0 0",
-                    maxWidth: 1120,
-                  }}
-                >
-                  {media.description}
-                </p>
-              ) : null}
+              <MediaInfoRow media={media} />
             </div>
 
             <div
               style={{
-                minWidth: 210,
-                fontSize: 15,
-                lineHeight: 1.35,
-                paddingTop: 4,
+                display: "flex",
+                gap: 16,
+                flexWrap: "wrap",
+                marginTop: 10,
+                fontSize: 14,
               }}
             >
-              <p style={{ margin: 0 }}>
+              <span>
                 <strong>Average rating:</strong>{" "}
                 {averageRating === null
                   ? "No ratings yet"
                   : `${averageRating.toFixed(1)}/10`}
-              </p>
+              </span>
 
-              <p style={{ margin: "4px 0 0" }}>
+              <span>
                 <strong>Total entries:</strong> {media.entries.length}
-              </p>
+              </span>
             </div>
+
+            {media.originalTitle && media.originalTitle !== media.title ? (
+              <p style={{ marginBottom: 8 }}>
+                <strong>Original title:</strong> {media.originalTitle}
+              </p>
+            ) : null}
+
+            {media.description ? (
+              <p
+                style={{
+                  lineHeight: 1.48,
+                  fontSize: 19,
+                  margin: "14px 0 0",
+                  maxWidth: 760,
+                }}
+              >
+                {media.description}
+              </p>
+            ) : null}
           </div>
 
           <MediaActions
