@@ -635,7 +635,7 @@ export default async function MediaPage({ params }: Props) {
                   width: "100%",
                   maxWidth: "min(100%, 1100px)",
                   display: "-webkit-box",
-                  WebkitLineClamp: 3,
+                  WebkitLineClamp: 4,
                   WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                 }}
