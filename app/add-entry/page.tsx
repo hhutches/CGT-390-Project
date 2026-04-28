@@ -929,7 +929,7 @@ export default function AddEntryPage() {
   }
 
   return (
-    <main style={{ padding: 40, maxWidth: 1100 }}>
+    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
       <h1>Add Entry / Advanced Search</h1>
 
       <p style={{ color: "#555", maxWidth: 760 }}>

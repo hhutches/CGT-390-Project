@@ -581,7 +581,7 @@ export default async function ProfilePage({
   });
 
   return (
-    <main style={{ padding: 40, maxWidth: 1000 }}>
+    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
       <section style={{ marginBottom: 32 }}>
         <div
           style={{

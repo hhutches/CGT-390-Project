@@ -93,7 +93,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main style={{ padding: 40, maxWidth: 520 }}>
+    <main style={{ padding: 40, maxWidth: 520, margin: "0 auto", boxSizing: "border-box" }}>
       <h1>Create Account</h1>
 
       <p style={{ color: "#555" }}>
