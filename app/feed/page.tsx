@@ -1136,7 +1136,7 @@ export default function FeedPage() {
   }, []);
 
   return (
-    <main style={{ padding: 40, maxWidth: 900 }}>
+    <main style={{ padding: 40, maxWidth: 900, minHeight: "calc(100vh - 90px)", background: "transparent" }}>
       <h1>Feed</h1>
 
       {!authLoaded ? null : currentUser ? (

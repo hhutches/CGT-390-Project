@@ -83,3 +83,43 @@ textarea,
 select {
   background-color: rgba(255, 255, 255, 0.72);
 }
+
+
+/* App-wide soft background override */
+:root {
+  --app-bg:
+    radial-gradient(circle at top left, rgba(255,255,255,0.92), transparent 30%),
+    linear-gradient(135deg, #f3eee7 0%, #ebe4da 45%, #e5e7ef 100%);
+  --app-surface: rgba(255, 252, 247, 0.84);
+  --app-surface-strong: rgba(255, 252, 247, 0.94);
+  --app-border: rgba(35, 31, 25, 0.14);
+  --app-text: #171717;
+  --app-muted: #5f5b55;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  background: var(--app-bg) fixed !important;
+  color: var(--app-text);
+}
+
+body {
+  min-height: 100vh;
+}
+
+body > div,
+body > div > div {
+  background: transparent !important;
+}
+
+main {
+  background: transparent !important;
+}
+
+input,
+textarea,
+select {
+  background-color: rgba(255,255,255,0.74);
+}
