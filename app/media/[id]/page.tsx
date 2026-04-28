@@ -21,13 +21,30 @@ type TmdbExtras = {
     name: string;
     url: string;
   } | null;
+  logoUrl: string | null;
   directors: TmdbPerson[];
   cast: TmdbPerson[];
 };
 
+function getEmptyTmdbExtras(): TmdbExtras {
+  return {
+    trailer: null,
+    logoUrl: null,
+    directors: [],
+    cast: [],
+  };
+}
+
 function getYear(date: Date | string | null) {
   if (!date) return null;
-  return new Date(date).getFullYear();
+
+  const parsed = new Date(date);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.getFullYear();
 }
 
 function formatRating(value: number | null) {
@@ -52,6 +69,11 @@ function formatDuration(seconds: number | null | undefined) {
   }
 
   return `${hours} hr ${remainingMinutes} min`;
+}
+
+function tmdbOriginalImage(path: string | null | undefined) {
+  if (!path) return null;
+  return `https://image.tmdb.org/t/p/original${path}`;
 }
 
 function MediaCoverDisplay({ media }: { media: any }) {
@@ -176,21 +198,13 @@ async function getTmdbExtras(media: any): Promise<TmdbExtras> {
   const tmdbRef = getTmdbExternalRef(media);
 
   if (!tmdbRef || (media.type !== "MOVIE" && media.type !== "SHOW")) {
-    return {
-      trailer: null,
-      directors: [],
-      cast: [],
-    };
+    return getEmptyTmdbExtras();
   }
 
   const token = process.env.TMDB_ACCESS_TOKEN;
 
   if (!token) {
-    return {
-      trailer: null,
-      directors: [],
-      cast: [],
-    };
+    return getEmptyTmdbExtras();
   }
 
   const kind = media.type === "SHOW" ? "tv" : "movie";
@@ -212,9 +226,10 @@ async function getTmdbExtras(media: any): Promise<TmdbExtras> {
     return res.json();
   }
 
-  const [videos, credits] = await Promise.all([
+  const [videos, credits, images] = await Promise.all([
     tmdbFetch(`${kind}/${tmdbId}/videos?language=en-US`),
     tmdbFetch(`${kind}/${tmdbId}/credits?language=en-US`),
+    tmdbFetch(`${kind}/${tmdbId}/images?include_image_language=en,null`),
   ]);
 
   const trailer =
@@ -229,6 +244,18 @@ async function getTmdbExtras(media: any): Promise<TmdbExtras> {
     ) ||
     videos?.results?.find((video: any) => video.site === "YouTube") ||
     null;
+
+  const logo =
+    images?.logos?.find(
+      (item: any) => item.iso_639_1 === "en" && item.file_path
+    ) ||
+    images?.logos?.find(
+      (item: any) => item.iso_639_1 === null && item.file_path
+    ) ||
+    images?.logos?.find((item: any) => item.file_path) ||
+    null;
+
+  const logoUrl = tmdbOriginalImage(logo?.file_path);
 
   const directors =
     credits?.crew
@@ -272,6 +299,7 @@ async function getTmdbExtras(media: any): Promise<TmdbExtras> {
           url: `https://www.youtube.com/embed/${trailer.key}`,
         }
       : null,
+    logoUrl,
     directors,
     cast,
   };
@@ -397,6 +425,7 @@ export default async function MediaPage({ params }: Props) {
       : null;
 
   const releaseYear = getYear(media.releaseDate);
+  const isTmdbVisualMedia = media.type === "MOVIE" || media.type === "SHOW";
 
   return (
     <main style={{ padding: 40, maxWidth: 1000 }}>
@@ -415,10 +444,38 @@ export default async function MediaPage({ params }: Props) {
             {media.type}
           </p>
 
-          <h1 style={{ marginBottom: 8 }}>
-            {media.title}
-            {releaseYear && <span> ({releaseYear})</span>}
-          </h1>
+          {isTmdbVisualMedia && tmdbExtras.logoUrl ? (
+            <div style={{ margin: "10px 0 16px" }}>
+              <img
+                src={tmdbExtras.logoUrl}
+                alt={media.title}
+                style={{
+                  display: "block",
+                  maxWidth: 430,
+                  maxHeight: 155,
+                  objectFit: "contain",
+                  objectPosition: "left center",
+                }}
+              />
+
+              {releaseYear ? (
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontWeight: 800,
+                    color: "#333",
+                  }}
+                >
+                  {releaseYear}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <h1 style={{ marginBottom: 8 }}>
+              {media.title}
+              {releaseYear && <span> ({releaseYear})</span>}
+            </h1>
+          )}
 
           {media.originalTitle && media.originalTitle !== media.title && (
             <p>
@@ -553,7 +610,7 @@ export default async function MediaPage({ params }: Props) {
         />
       </section>
 
-      {(media.type === "MOVIE" || media.type === "SHOW") && (
+      {isTmdbVisualMedia && (
         <section style={{ marginTop: 40 }}>
           <h2>Trailer</h2>
 
@@ -603,7 +660,7 @@ export default async function MediaPage({ params }: Props) {
         </p>
       </section>
 
-      {(media.type === "MOVIE" || media.type === "SHOW") && (
+      {isTmdbVisualMedia && (
         <>
           <PersonScroller
             title="Director / Creator"
