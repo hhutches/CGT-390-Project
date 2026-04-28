@@ -159,7 +159,7 @@ function MediaCoverDisplay({ media }: { media: any }) {
         alt={`${media.title} cover`}
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 430,
           aspectRatio: "2 / 3",
           height: "auto",
           objectFit: "cover",
@@ -498,20 +498,22 @@ export default async function MediaPage({ params }: Props) {
   ];
 
   return (
-    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
+    <main style={{ padding: "34px clamp(18px, 3vw, 48px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "clamp(300px, 28vw, 420px) minmax(0, 1fr)",
-          gap: 44,
+          gridTemplateColumns: "clamp(310px, 28vw, 430px) minmax(0, 1fr)",
+          gap: 42,
           alignItems: "start",
           width: "100%",
+          maxWidth: "none",
+          margin: 0,
         }}
       >
         <div
           style={{
-            display: "flex",
-            alignItems: "start",
+            alignSelf: "start",
+            minWidth: 0,
           }}
         >
           <MediaCoverDisplay media={media} />
@@ -524,8 +526,8 @@ export default async function MediaPage({ params }: Props) {
             maxWidth: "none",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "flex-start",
-            paddingTop: 18,
+            alignItems: "stretch",
+            paddingTop: 14,
           }}
         >
           <p
@@ -533,7 +535,7 @@ export default async function MediaPage({ params }: Props) {
               margin: 0,
               textTransform: "uppercase",
               opacity: 0.7,
-              fontWeight: 800,
+              fontWeight: 900,
               letterSpacing: "0.04em",
             }}
           >
@@ -541,13 +543,13 @@ export default async function MediaPage({ params }: Props) {
           </p>
 
           {isTmdbVisualMedia && tmdbExtras.logoUrl ? (
-            <div style={{ margin: "14px 0 18px" }}>
+            <div style={{ margin: "12px 0 14px", width: "100%" }}>
               <img
                 src={tmdbExtras.logoUrl}
                 alt={media.title}
                 style={{
                   display: "block",
-                  width: "min(100%, 560px)",
+                  width: "min(100%, 620px)",
                   maxHeight: 150,
                   objectFit: "contain",
                   objectPosition: "left center",
@@ -558,9 +560,9 @@ export default async function MediaPage({ params }: Props) {
             <h1
               style={{
                 margin: "10px 0 12px",
-                fontSize: 52,
-                lineHeight: 0.95,
-                letterSpacing: "-0.055em",
+                fontSize: 48,
+                lineHeight: 0.98,
+                letterSpacing: "-0.05em",
               }}
             >
               {media.title}
@@ -568,13 +570,19 @@ export default async function MediaPage({ params }: Props) {
             </h1>
           )}
 
-          <div>
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "none",
+            }}
+          >
             <div
               style={{
                 display: "flex",
                 alignItems: "baseline",
                 gap: 18,
                 flexWrap: "wrap",
+                width: "100%",
               }}
             >
               <h2
@@ -594,7 +602,7 @@ export default async function MediaPage({ params }: Props) {
             <div
               style={{
                 display: "flex",
-                gap: 16,
+                gap: 18,
                 flexWrap: "wrap",
                 marginTop: 10,
                 fontSize: 14,
@@ -621,10 +629,15 @@ export default async function MediaPage({ params }: Props) {
             {media.description ? (
               <p
                 style={{
-                  lineHeight: 1.48,
-                  fontSize: 19,
+                  lineHeight: 1.42,
+                  fontSize: 18,
                   margin: "14px 0 0",
-                  maxWidth: 920,
+                  width: "100%",
+                  maxWidth: 980,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 6,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
               >
                 {media.description}
@@ -632,66 +645,26 @@ export default async function MediaPage({ params }: Props) {
             ) : null}
           </div>
 
-
-
-          {!isTmdbVisualMedia ? (
-            <div style={{ marginTop: 22 }}>
-              {media.genres.length > 0 && (
-                <p>
-                  <strong>Genres:</strong>{" "}
-                  {media.genres.map((item: any) => item.genre.name).join(", ")}
-                </p>
-              )}
-
-              {media.externalRefs.length > 0 && (
-                <p>
-                  <strong>External links:</strong>{" "}
-                  {media.externalRefs
-                    .filter((ref: any) => ref.externalUrl)
-                    .map((ref: any, index: number) => (
-                      <span key={ref.id}>
-                        {index > 0 && ", "}
-                        <a
-                          href={ref.externalUrl ?? "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {ref.provider}
-                        </a>
-                      </span>
-                    ))}
-                </p>
-              )}
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "clamp(300px, 28vw, 420px) minmax(0, 1fr)",
-          gap: 44,
-          alignItems: "start",
-          width: "100%",
-          marginTop: 18,
-        }}
-      >
-        <div aria-hidden="true" />
-
-        <div style={{ width: "100%", maxWidth: "none" }}>
-          <MediaActions
-            mediaId={String(media.id)}
-            mediaType={media.type}
-            existingEntry={null}
-          />
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "none",
+              marginTop: 16,
+            }}
+          >
+            <MediaActions
+              mediaId={String(media.id)}
+              mediaType={media.type}
+              existingEntry={null}
+            />
+          </div>
         </div>
       </section>
 
       {isTmdbVisualMedia && castAndCrew.length > 0 ? (
         <section
           style={{
-            marginTop: 28,
+            marginTop: 30,
             width: "100%",
             maxWidth: "none",
           }}
@@ -734,21 +707,6 @@ export default async function MediaPage({ params }: Props) {
       )}
 
       <hr style={{ margin: "40px 0" }} />
-
-      <section>
-        <h2>Community Ratings</h2>
-
-        <p>
-          <strong>Average rating:</strong>{" "}
-          {averageRating === null
-            ? "No ratings yet"
-            : `${averageRating.toFixed(1)}/10`}
-        </p>
-
-        <p>
-          <strong>Total entries:</strong> {media.entries.length}
-        </p>
-      </section>
 
 
 
