@@ -285,7 +285,7 @@ export default function MediaActions({
                 }}
               >
                 <strong style={{ fontSize: 12 }}>
-                  Rating: {rating ? `${rating}/10` : "No rating"}
+                  Rating:
                 </strong>
 
                 <div
@@ -321,26 +321,6 @@ export default function MediaActions({
                 </div>
               </div>
 
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => save()}
-                style={{
-                  marginTop: 4,
-                  padding: "6px 11px",
-                  borderRadius: 999,
-                  border: "1px solid #222",
-                  background: "black",
-                  color: "white",
-                  fontWeight: 900,
-                  fontSize: 12,
-                  cursor: saving ? "not-allowed" : "pointer",
-                  opacity: saving ? 0.7 : 1,
-                }}
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-
               {rating ? (
                 <button
                   type="button"
@@ -360,6 +340,33 @@ export default function MediaActions({
                 </button>
               ) : null}
             </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 12,
+            }}
+          >
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => save()}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: "1px solid #222",
+                background: "black",
+                color: "white",
+                fontWeight: 900,
+                fontSize: 13,
+                cursor: saving ? "not-allowed" : "pointer",
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
           </div>
 
           {message ? (
