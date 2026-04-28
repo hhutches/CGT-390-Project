@@ -191,10 +191,10 @@ export default function MediaActions({
       {open ? (
         <div
           style={{
-            marginTop: 14,
+            marginTop: 10,
             border: "1px solid var(--app-border, #ccc)",
             borderRadius: 16,
-            padding: 14,
+            padding: 12,
             background: "var(--app-surface-strong, rgba(255,255,255,0.9))",
             width: "100%",
             maxWidth: "none",
@@ -292,7 +292,7 @@ export default function MediaActions({
               id="review-text"
               value={review}
               onChange={(event) => setReview(event.target.value)}
-              rows={4}
+              rows={2}
               disabled={saving}
               placeholder={copy.placeholder}
               style={{
@@ -306,7 +306,7 @@ export default function MediaActions({
                 fontSize: 14,
                 lineHeight: 1.35,
                 resize: "vertical",
-                minHeight: 110,
+                minHeight: 72,
                 background: saving ? "#f6f6f6" : "rgba(255,255,255,0.76)",
               }}
             />

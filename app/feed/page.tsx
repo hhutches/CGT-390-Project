@@ -411,15 +411,16 @@ function PopularMovieScroller({ events }: { events: FeedEvent[] }) {
   }
 
   return (
-    <section>
+    <section style={{ width: "100%", maxWidth: "none" }}>
       <h2 style={{ marginTop: 0 }}>Popular This Week</h2>
 
       <div
         style={{
           display: "flex",
-          gap: 16,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
+          maxWidth: "100%",
           paddingBottom: 18,
           scrollSnapType: "x mandatory",
         }}
@@ -504,9 +505,10 @@ function PopularTvScroller({ events }: { events: FeedEvent[] }) {
       <div
         style={{
           display: "flex",
-          gap: 16,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
+          maxWidth: "100%",
           paddingBottom: 18,
           scrollSnapType: "x mandatory",
         }}
@@ -591,9 +593,10 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
       <div
         style={{
           display: "flex",
-          gap: 16,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
+          maxWidth: "100%",
           paddingBottom: 18,
           scrollSnapType: "x mandatory",
         }}
@@ -692,9 +695,10 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
       <div
         style={{
           display: "flex",
-          gap: 16,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
+          maxWidth: "100%",
           paddingBottom: 18,
           scrollSnapType: "x mandatory",
         }}
@@ -793,9 +797,10 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
       <div
         style={{
           display: "flex",
-          gap: 16,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
+          maxWidth: "100%",
           paddingBottom: 18,
           scrollSnapType: "x mandatory",
         }}

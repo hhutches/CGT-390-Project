@@ -375,15 +375,16 @@ function PersonScroller({
   if (people.length === 0) return null;
 
   return (
-    <section style={{ marginTop: 30 }}>
+    <section style={{ marginTop: 30, width: "100%", maxWidth: "none" }}>
       <h2>{title}</h2>
 
       <div
         style={{
           display: "flex",
-          gap: 12,
+          gap: 14,
           overflowX: "auto",
           width: "100%",
+          maxWidth: "100%",
           paddingBottom: 12,
         }}
       >
@@ -631,17 +632,7 @@ export default async function MediaPage({ params }: Props) {
             ) : null}
           </div>
 
-          <MediaActions
-            mediaId={String(media.id)}
-            mediaType={media.type}
-            existingEntry={null}
-          />
 
-          {isTmdbVisualMedia && castAndCrew.length > 0 ? (
-            <div style={{ marginTop: 18, width: "100%", maxWidth: "none" }}>
-              <PersonScroller title="Cast & Crew" people={castAndCrew} />
-            </div>
-          ) : null}
 
           {!isTmdbVisualMedia ? (
             <div style={{ marginTop: 22 }}>
@@ -675,6 +666,39 @@ export default async function MediaPage({ params }: Props) {
           ) : null}
         </div>
       </section>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "clamp(300px, 28vw, 420px) minmax(0, 1fr)",
+          gap: 44,
+          alignItems: "start",
+          width: "100%",
+          marginTop: 18,
+        }}
+      >
+        <div aria-hidden="true" />
+
+        <div style={{ width: "100%", maxWidth: "none" }}>
+          <MediaActions
+            mediaId={String(media.id)}
+            mediaType={media.type}
+            existingEntry={null}
+          />
+        </div>
+      </section>
+
+      {isTmdbVisualMedia && castAndCrew.length > 0 ? (
+        <section
+          style={{
+            marginTop: 28,
+            width: "100%",
+            maxWidth: "none",
+          }}
+        >
+          <PersonScroller title="Cast & Crew" people={castAndCrew} />
+        </section>
+      ) : null}
 
       {isTmdbVisualMedia && (
         <section style={{ marginTop: 40 }}>
@@ -728,7 +752,7 @@ export default async function MediaPage({ params }: Props) {
 
 
 
-      <section style={{ marginTop: 30 }}>
+      <section style={{ marginTop: 30, width: "100%", maxWidth: "none" }}>
         <h2>Reviews</h2>
 
         {media.entries.length === 0 ? (
