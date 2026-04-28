@@ -491,12 +491,12 @@ export default async function MediaPage({ params }: Props) {
   ];
 
   return (
-    <main style={{ padding: "44px 48px", maxWidth: 1240, margin: "0 auto", boxSizing: "border-box" }}>
+    <main style={{ padding: "36px 32px", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "360px minmax(0, 1fr)",
-          gap: 44,
+          gridTemplateColumns: "390px minmax(0, 1fr)",
+          gap: 38,
           alignItems: "stretch",
           width: "100%",
         }}
