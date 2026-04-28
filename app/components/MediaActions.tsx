@@ -173,9 +173,10 @@ export default function MediaActions({
     <section
       className="media-actions-root"
       style={{
-        marginTop: open ? 0 : 10,
+        marginTop: 0,
         width: "100%",
         maxWidth: "none",
+        height: "100%",
       }}
     >
       <button
@@ -206,7 +207,8 @@ export default function MediaActions({
             background: "var(--app-surface-strong, rgba(255,255,255,0.9))",
             width: "100%",
             maxWidth: "none",
-            minHeight: 245,
+            height: "calc(100% - 44px)",
+            minHeight: 0,
             boxSizing: "border-box",
           }}
         >
@@ -216,7 +218,8 @@ export default function MediaActions({
               gridTemplateColumns: "minmax(0, 1fr) 300px",
               gap: 18,
               alignItems: "stretch",
-              minHeight: 220,
+              height: "100%",
+              minHeight: 0,
             }}
           >
             <div
@@ -259,7 +262,7 @@ export default function MediaActions({
                   id="review-text"
                   value={review}
                   onChange={(event) => setReview(event.target.value)}
-                  rows={3}
+                  rows={4}
                   disabled={saving}
                   placeholder={copy.placeholder}
                   style={{
@@ -273,8 +276,8 @@ export default function MediaActions({
                     fontSize: 13,
                     lineHeight: 1.25,
                     resize: "vertical",
-                    minHeight: 142,
-                    maxHeight: 190,
+                    minHeight: 0,
+                    maxHeight: "none",
                     flex: 1,
                     background: saving ? "#f6f6f6" : "rgba(255,255,255,0.76)",
                   }}
@@ -291,7 +294,8 @@ export default function MediaActions({
                 alignItems: "flex-end",
                 justifyContent: "space-between",
                 gap: 10,
-                minHeight: 220,
+                height: "100%",
+                minHeight: 0,
               }}
             >
               <div

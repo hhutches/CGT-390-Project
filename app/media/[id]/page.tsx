@@ -52,6 +52,20 @@ function formatRating(value: number | null) {
   return `${value}/10`;
 }
 
+function cleanDescription(value: string | null | undefined) {
+  if (!value) return null;
+
+  return String(value)
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/p>\s*<p>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function formatDuration(seconds: number | null | undefined) {
   if (!seconds) return "Unknown";
 
@@ -487,6 +501,7 @@ export default async function MediaPage({ params }: Props) {
       : null;
 
   const releaseYear = getYear(media.releaseDate);
+  const descriptionText = cleanDescription(media.description);
   const isTmdbVisualMedia = media.type === "MOVIE" || media.type === "SHOW";
   const director =
     tmdbExtras.directors.find((person) =>
@@ -525,12 +540,15 @@ export default async function MediaPage({ params }: Props) {
             minWidth: 0,
             width: "100%",
             maxWidth: "none",
-            display: "flex",
-            flexDirection: "column",
+            height: 645,
+            display: "grid",
+            gridTemplateRows: "auto minmax(0, 1fr) 270px",
             alignItems: "stretch",
             paddingTop: 14,
+            boxSizing: "border-box",
           }}
         >
+          <div>
           <p
             style={{
               margin: 0,
@@ -571,10 +589,14 @@ export default async function MediaPage({ params }: Props) {
             </h1>
           )}
 
+          </div>
+
           <div
             style={{
               width: "100%",
               maxWidth: "none",
+              minHeight: 0,
+              overflow: "hidden",
             }}
           >
             <div
