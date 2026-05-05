@@ -326,174 +326,467 @@ export default function FavoritesPage() {
 
   if (!currentUser && !loading) {
     return (
-      <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
-        <h1>Set Top 4 Favorites</h1>
-        <p>You need to log in before editing favorites.</p>
-        <p>
-          <a href="/login">Log In</a>
-          {" | "}
-          <a href="/signup">Sign Up</a>
-        </p>
+      <main
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+          margin: 0,
+          boxSizing: "border-box",
+          background: "#f7f8fa",
+        }}
+      >
+        <section
+          style={{
+            padding: "40px 48px 28px",
+            background: "#fff",
+            borderBottom: "2px solid #ff7f7a",
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 42,
+            }}
+          >
+            Set Top 4 Favorites
+          </h1>
 
-        {message && (
-          <pre style={{ marginTop: 20, whiteSpace: "pre-wrap" }}>{message}</pre>
-        )}
+          <p
+            style={{
+              color: "#555",
+              marginTop: 10,
+              lineHeight: 1.5,
+            }}
+          >
+            You need to log in before editing favorites.
+          </p>
+        </section>
+
+        <section
+          style={{
+            margin: "28px 48px",
+            padding: 24,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+          }}
+        >
+          <p
+            style={{
+              marginTop: 0,
+              color: "#555",
+              lineHeight: 1.5,
+            }}
+          >
+            Log in or create an account to set your favorite movies, shows,
+            books, albums, and games.
+          </p>
+
+          <p style={{ marginBottom: 0 }}>
+            <a
+              href="/login"
+              style={{
+                color: "#d95d59",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              Log In
+            </a>
+            {" | "}
+            <a
+              href="/signup"
+              style={{
+                color: "#d95d59",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              Sign Up
+            </a>
+          </p>
+
+          {message && (
+            <pre
+              style={{
+                marginTop: 20,
+                whiteSpace: "pre-wrap",
+                background: "#f7f8fa",
+                padding: 14,
+                borderRadius: 8,
+                border: "1px solid #ddd",
+              }}
+            >
+              {message}
+            </pre>
+          )}
+        </section>
       </main>
     );
   }
 
   return (
-    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
-      <h1>Set Top 4 Favorites</h1>
-
-      {currentUser && (
-        <p style={{ color: "#555" }}>
-          Editing favorites for{" "}
-          <strong>
-            {currentUser.displayName || currentUser.username} (@
-            {currentUser.username})
-          </strong>
-        </p>
-      )}
-
-      <section style={{ marginBottom: 30 }}>
-        <h2>Current Favorites</h2>
-
-        {[1, 2, 3, 4].map((slot) => {
-          const favorite = favorites.find((item) => item.slotNumber === slot);
-
-          return (
-            <div
-              key={slot}
-              style={{
-                border:
-                  selectedSlot === slot ? "2px solid black" : "1px solid #ccc",
-                borderRadius: 8,
-                padding: 12,
-                marginBottom: 10,
-                background: selectedSlot === slot ? "#f5f5f5" : "white",
-              }}
-            >
-              <strong>Slot {slot}:</strong>{" "}
-              {favorite ? (
-                <>
-                  <a href={`/media/${favorite.media.id}`}>
-                    {favorite.media.title}
-                  </a>{" "}
-                  ({favorite.media.type}){" "}
-                  {favorite.media.releaseDate && (
-                    <span>— {formatYear(favorite.media.releaseDate)}</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => clearFavorite(slot)}
-                    disabled={loading}
-                    style={{ marginLeft: 10 }}
-                  >
-                    Clear
-                  </button>
-                </>
-              ) : (
-                <span>Empty</span>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setSelectedSlot(slot)}
-                disabled={loading}
-                style={{ marginLeft: 10 }}
-              >
-                Use this slot
-              </button>
-            </div>
-          );
-        })}
-      </section>
-
-      <section style={{ marginBottom: 30 }}>
-        <h2>Add / Replace Favorite</h2>
-
-        <p>
-          Selected slot: <strong>{selectedSlot}</strong>
-        </p>
-
-        <label>Search local media</label>
-        <br />
-
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search imported media..."
-          style={{ padding: 8, width: 300 }}
-        />
-
-        <button
-          type="button"
-          onClick={searchMedia}
-          disabled={loading || !currentUser}
-          style={{ marginLeft: 10, padding: 8 }}
+    <main
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        boxSizing: "border-box",
+        background: "#f7f8fa",
+      }}
+    >
+      <section
+        style={{
+          padding: "40px 48px 28px",
+          background: "#fff",
+          borderBottom: "2px solid #ff7f7a",
+        }}
+      >
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 42,
+          }}
         >
-          {loading ? "Loading..." : "Search"}
-        </button>
+          Set Top 4 Favorites
+        </h1>
 
-        <div style={{ marginTop: 16 }}>
-          {results.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setSelectedMedia(item)}
-              disabled={loading}
-              style={{
-                display: "block",
-                width: "100%",
-                textAlign: "left",
-                padding: 12,
-                marginBottom: 8,
-                border:
-                  selectedMedia?.id === item.id
-                    ? "2px solid black"
-                    : "1px solid #ccc",
-                borderRadius: 8,
-                background: "var(--app-surface-strong)",
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-            >
-              <strong>{item.title}</strong> ({item.type})
-              {item.releaseDate && (
-                <span> — {formatYear(item.releaseDate)}</span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {selectedMedia && (
-          <p>
-            Selected media: <strong>{selectedMedia.title}</strong>
+        {currentUser && (
+          <p
+            style={{
+              color: "#555",
+              marginTop: 10,
+              lineHeight: 1.5,
+            }}
+          >
+            Editing favorites for{" "}
+            <strong>
+              {currentUser.displayName || currentUser.username} (@
+              {currentUser.username})
+            </strong>
           </p>
         )}
-
-        <button
-          type="button"
-          onClick={saveFavorite}
-          disabled={!selectedMedia || loading || !currentUser}
-        >
-          Save Favorite to Slot {selectedSlot}
-        </button>
       </section>
 
-      <div style={{ marginTop: 20 }}>
-        {currentUser && (
-          <>
-            <a href={`/profiles/${currentUser.username}`}>Go to My Profile</a>
-            {" | "}
-          </>
-        )}
-        <a href="/feed">Go to Feed</a>
-        {" | "}
-        <a href="/logout">Log Out</a>
-      </div>
+      <div
+        style={{
+          padding: "28px 48px 40px",
+        }}
+      >
+        <section
+          style={{
+            marginBottom: 28,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>Current Favorites</h2>
 
-      <pre style={{ marginTop: 20, whiteSpace: "pre-wrap" }}>{message}</pre>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {[1, 2, 3, 4].map((slot) => {
+              const favorite = favorites.find((item) => item.slotNumber === slot);
+
+              return (
+                <div
+                  key={slot}
+                  style={{
+                    border:
+                      selectedSlot === slot
+                        ? "2px solid #ff7f7a"
+                        : "1px solid #ddd",
+                    borderRadius: 12,
+                    padding: 14,
+                    background: selectedSlot === slot ? "#fff2f1" : "#fff",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      marginBottom: 8,
+                      color: selectedSlot === slot ? "#d95d59" : "#111",
+                    }}
+                  >
+                    Slot {slot}
+                  </div>
+
+                  {favorite ? (
+                    <>
+                      <a
+                        href={`/media/${favorite.media.id}`}
+                        style={{
+                          color: "#111",
+                          fontWeight: 700,
+                          textDecoration: "none",
+                        }}
+                      >
+                        {favorite.media.title}
+                      </a>
+
+                      <p
+                        style={{
+                          margin: "6px 0 12px",
+                          color: "#555",
+                          fontSize: 14,
+                        }}
+                      >
+                        {favorite.media.type}
+                        {favorite.media.releaseDate && (
+                          <span> · {formatYear(favorite.media.releaseDate)}</span>
+                        )}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => clearFavorite(slot)}
+                        disabled={loading}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: 8,
+                          border: "1px solid #ddd",
+                          background: "#fff",
+                          cursor: loading ? "not-allowed" : "pointer",
+                          marginRight: 8,
+                        }}
+                      >
+                        Clear
+                      </button>
+                    </>
+                  ) : (
+                    <p
+                      style={{
+                        margin: "0 0 12px",
+                        color: "#777",
+                        fontSize: 14,
+                      }}
+                    >
+                      Empty
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSlot(slot)}
+                    disabled={loading}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      border: "1px solid #ff7f7a",
+                      background: selectedSlot === slot ? "#ff7f7a" : "#ffe2df",
+                      color: selectedSlot === slot ? "#fff" : "#111",
+                      fontWeight: 700,
+                      cursor: loading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    Use this slot
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section
+          style={{
+            marginBottom: 28,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>
+            Add / Replace Favorite
+          </h2>
+
+          <p
+            style={{
+              marginTop: 0,
+              color: "#555",
+            }}
+          >
+            Selected slot: <strong>{selectedSlot}</strong>
+          </p>
+
+          <label style={{ fontWeight: 600 }}>Search local media</label>
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              searchMedia();
+            }}
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              flexWrap: "wrap",
+              marginTop: 8,
+            }}
+          >
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search imported media..."
+              style={{
+                padding: 10,
+                width: 340,
+                maxWidth: "100%",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                background: "#fff",
+              }}
+            />
+
+            <button
+              type="submit"
+              disabled={loading || !currentUser}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                cursor: loading || !currentUser ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Loading..." : "Search"}
+            </button>
+          </form>
+
+          <div
+            style={{
+              marginTop: 18,
+              border:
+                results.length > 0 ? "1px solid #ddd" : "none",
+              borderRadius: 12,
+              overflow: "hidden",
+              background: "#fff",
+            }}
+          >
+            {results.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSelectedMedia(item)}
+                disabled={loading}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: 14,
+                  border: "none",
+                  borderBottom: "1px solid #ddd",
+                  background: selectedMedia?.id === item.id ? "#fff2f1" : "#fff",
+                  cursor: loading ? "not-allowed" : "pointer",
+                }}
+              >
+                <strong>{item.title}</strong> ({item.type})
+                {item.releaseDate && (
+                  <span> — {formatYear(item.releaseDate)}</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {selectedMedia && (
+            <p
+              style={{
+                background: "#fff2f1",
+                border: "1px solid #ffd6d4",
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 16,
+              }}
+            >
+              Selected media: <strong>{selectedMedia.title}</strong>
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={saveFavorite}
+            disabled={!selectedMedia || loading || !currentUser}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 8,
+              border: "1px solid #ff7f7a",
+              background: !selectedMedia || !currentUser ? "#ddd" : "#ff7f7a",
+              color: !selectedMedia || !currentUser ? "#666" : "white",
+              fontWeight: 700,
+              cursor:
+                !selectedMedia || loading || !currentUser
+                  ? "not-allowed"
+                  : "pointer",
+              marginTop: 16,
+            }}
+          >
+            Save Favorite to Slot {selectedSlot}
+          </button>
+        </section>
+
+        <div style={{ marginTop: 20 }}>
+          {currentUser && (
+            <>
+              <a
+                href={`/profiles/${currentUser.username}`}
+                style={{
+                  color: "#d95d59",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Go to My Profile
+              </a>
+              {" | "}
+            </>
+          )}
+
+          <a
+            href="/feed"
+            style={{
+              color: "#d95d59",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            Go to Feed
+          </a>
+          {" | "}
+          <a
+            href="/logout"
+            style={{
+              color: "#d95d59",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            Log Out
+          </a>
+        </div>
+
+        {message ? (
+          <pre
+            style={{
+              marginTop: 20,
+              whiteSpace: "pre-wrap",
+              background: "#fff",
+              padding: 14,
+              borderRadius: 8,
+              border: "1px solid #ddd",
+            }}
+          >
+            {message}
+          </pre>
+        ) : null}
+      </div>
     </main>
   );
 }
