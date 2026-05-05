@@ -181,6 +181,11 @@ function PopularLoadingMessage({ loading }: { loading: boolean }) {
         fontWeight: 700,
         marginTop: 10,
         marginBottom: 20,
+        background: "#fff2f1",
+        border: "1px solid #f3d0ce",
+        borderRadius: 8,
+        padding: "10px 14px",
+        display: "inline-block",
       }}
     >
       {popularLoadingMessages[messageIndex]}
@@ -244,27 +249,31 @@ function MediaCoverCard({ media }: { media: Media }) {
       <div
         style={{
           width: 160,
-          height: 240,
-          border: "1px solid var(--app-border)",
-          borderRadius: 8,
+          border: "1px solid #ddd",
+          borderRadius: 10,
+
           overflow: "hidden",
-          background: "var(--app-surface-strong)",
+          background: "#fff",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
+
         }}
       >
         <div
           style={{
-            height: 40,
-            padding: "6px 8px",
-            fontSize: 13,
+            padding: "8px",
+
+            fontSize: 12,
             fontWeight: 600,
             textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            lineHeight: 1.15,
+            background: "#fafafa",
+            borderBottom: "1px solid #eee",
+
+
+
+
+
           }}
         >
           {media.albumDetails?.primaryArtistName ?? "Unknown Artist"}
@@ -295,21 +304,24 @@ function MediaCoverCard({ media }: { media: Media }) {
               }}
             />
           ) : (
-            <span style={{ fontSize: 12 }}>No cover</span>
+            <span style={{ fontSize: 12, color: "#666" }}>No cover</span>
+
+
           )}
         </div>
 
         <div
           style={{
-            height: 40,
-            padding: "6px 8px",
+            padding: "8px",
+
             fontSize: 13,
             fontWeight: 700,
             textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            lineHeight: 1.15,
+            lineHeight: 1.2,
+
+
+
+
           }}
         >
           {media.title}
@@ -329,10 +341,11 @@ function MediaCoverCard({ media }: { media: Media }) {
           width: 160,
           height: 240,
           objectFit: "cover",
-          borderRadius: 8,
+          borderRadius: 10,
           flexShrink: 0,
-          border: "1px solid var(--app-border)",
+          border: "1px solid #ddd",
           background: "#eee",
+
         }}
       />
     );
@@ -343,14 +356,17 @@ function MediaCoverCard({ media }: { media: Media }) {
       style={{
         width: 160,
         height: 240,
-        border: "1px solid var(--app-border)",
-        borderRadius: 8,
+        border: "1px solid #ddd",
+        borderRadius: 10,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
         background: "#eee",
         fontSize: 12,
+        color: "#666",
+
+
       }}
     >
       No cover
@@ -362,8 +378,32 @@ function MediaMeta({ media }: { media: Media }) {
   const year = formatYear(media.releaseDate);
 
   return (
-    <div style={{ color: "#555", fontSize: 14, marginTop: 4 }}>
+    <div
+      style={{
+        color: "#555",
+        fontSize: 14,
+        marginTop: 6,
+
+
+
+
+      }}
+    >
       <span>{media.type}</span>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       {year && <span> · {year}</span>}
 
@@ -413,27 +453,35 @@ function PopularMovieScroller({ events }: { events: FeedEvent[] }) {
   return (
     <section
       style={{
-        width: "100%",
-        maxWidth: "none",
-        marginBottom: 28,
-        padding: 22,
-        border: "1px solid var(--app-border, rgba(0,0,0,0.12))",
-        borderRadius: 18,
-        background: "var(--app-surface-strong, #f6dddd)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-        boxSizing: "border-box",
+        background: "#fff",
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 20,
+
+
+
       }}
     >
-      <h2 style={{ margin: "0 0 18px", fontSize: 18, fontWeight: 900 }}>Popular This Week</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 16 }}>Popular This Week</h2>
+
+
+
+
+
+
+
+
+
+
 
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
-          maxWidth: "none",
-          paddingBottom: 18,
+          paddingBottom: 10,
+
           scrollSnapType: "x mandatory",
         }}
       >
@@ -451,6 +499,10 @@ function PopularMovieScroller({ events }: { events: FeedEvent[] }) {
                 color: "inherit",
                 textDecoration: "none",
                 scrollSnapAlign: "start",
+
+
+
+
               }}
             >
               {media.coverUrl ? (
@@ -463,10 +515,11 @@ function PopularMovieScroller({ events }: { events: FeedEvent[] }) {
                     width: 190,
                     height: 285,
                     objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid var(--app-border)",
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
                     background: "#eee",
                     display: "block",
+
                   }}
                 />
               ) : (
@@ -474,13 +527,16 @@ function PopularMovieScroller({ events }: { events: FeedEvent[] }) {
                   style={{
                     width: 190,
                     height: 285,
-                    border: "1px solid var(--app-border)",
-                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    borderRadius: 10,
                     background: "#eee",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 12,
+                    color: "#666",
+
+
                   }}
                 >
                   No cover
@@ -493,6 +549,7 @@ function PopularMovieScroller({ events }: { events: FeedEvent[] }) {
                   marginTop: 8,
                   fontSize: 15,
                   lineHeight: 1.2,
+
                 }}
               >
                 {media.title}
@@ -513,26 +570,34 @@ function PopularTvScroller({ events }: { events: FeedEvent[] }) {
   return (
     <section
       style={{
-        marginTop: 28,
-        marginBottom: 28,
-        padding: 22,
-        border: "1px solid var(--app-border, rgba(0,0,0,0.12))",
-        borderRadius: 18,
-        background: "var(--app-surface-strong, #f6dddd)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-        boxSizing: "border-box",
+        marginTop: 24,
+        background: "#fff",
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 20,
+
       }}
     >
-      <h2 style={{ margin: "0 0 18px", fontSize: 18, fontWeight: 900 }}>Popular TV This Week</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 16 }}>Popular TV This Week</h2>
+
+
+
+
+
+
+
+
+
+
 
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
-          maxWidth: "none",
-          paddingBottom: 18,
+          paddingBottom: 10,
+
           scrollSnapType: "x mandatory",
         }}
       >
@@ -550,6 +615,10 @@ function PopularTvScroller({ events }: { events: FeedEvent[] }) {
                 color: "inherit",
                 textDecoration: "none",
                 scrollSnapAlign: "start",
+
+
+
+
               }}
             >
               {media.coverUrl ? (
@@ -562,10 +631,11 @@ function PopularTvScroller({ events }: { events: FeedEvent[] }) {
                     width: 190,
                     height: 285,
                     objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid var(--app-border)",
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
                     background: "#eee",
                     display: "block",
+
                   }}
                 />
               ) : (
@@ -573,13 +643,16 @@ function PopularTvScroller({ events }: { events: FeedEvent[] }) {
                   style={{
                     width: 190,
                     height: 285,
-                    border: "1px solid var(--app-border)",
-                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    borderRadius: 10,
                     background: "#eee",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 12,
+                    color: "#666",
+
+
                   }}
                 >
                   No cover
@@ -592,6 +665,7 @@ function PopularTvScroller({ events }: { events: FeedEvent[] }) {
                   marginTop: 8,
                   fontSize: 15,
                   lineHeight: 1.2,
+
                 }}
               >
                 {media.title}
@@ -612,26 +686,34 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
   return (
     <section
       style={{
-        marginTop: 28,
-        marginBottom: 28,
-        padding: 22,
-        border: "1px solid var(--app-border, rgba(0,0,0,0.12))",
-        borderRadius: 18,
-        background: "var(--app-surface-strong, #f6dddd)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-        boxSizing: "border-box",
+        marginTop: 24,
+        background: "#fff",
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 20,
+
       }}
     >
-      <h2 style={{ margin: "0 0 18px", fontSize: 18, fontWeight: 900 }}>Popular New Albums</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 16 }}>Popular New Albums</h2>
+
+
+
+
+
+
+
+
+
+
 
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
-          maxWidth: "none",
-          paddingBottom: 18,
+          paddingBottom: 10,
+
           scrollSnapType: "x mandatory",
         }}
       >
@@ -649,6 +731,10 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
                 color: "inherit",
                 textDecoration: "none",
                 scrollSnapAlign: "start",
+
+
+
+
               }}
             >
               {media.coverUrl ? (
@@ -661,10 +747,11 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
                     width: 190,
                     height: 190,
                     objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid var(--app-border)",
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
                     background: "#eee",
                     display: "block",
+
                   }}
                 />
               ) : (
@@ -672,13 +759,16 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
                   style={{
                     width: 190,
                     height: 190,
-                    border: "1px solid var(--app-border)",
-                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    borderRadius: 10,
                     background: "#eee",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 12,
+                    color: "#666",
+
+
                   }}
                 >
                   No cover
@@ -691,6 +781,7 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
                   marginTop: 8,
                   fontSize: 15,
                   lineHeight: 1.2,
+
                 }}
               >
                 {media.title}
@@ -704,6 +795,7 @@ function PopularAlbumScroller({ events }: { events: FeedEvent[] }) {
                     fontSize: 13,
                     color: "#666",
                     lineHeight: 1.2,
+
                   }}
                 >
                   {media.albumDetails.primaryArtistName}
@@ -725,26 +817,34 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
   return (
     <section
       style={{
-        marginTop: 28,
-        marginBottom: 28,
-        padding: 22,
-        border: "1px solid var(--app-border, rgba(0,0,0,0.12))",
-        borderRadius: 18,
-        background: "var(--app-surface-strong, #f6dddd)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-        boxSizing: "border-box",
+        marginTop: 24,
+        background: "#fff",
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 20,
+
       }}
     >
-      <h2 style={{ margin: "0 0 18px", fontSize: 18, fontWeight: 900 }}>Popular Books</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 16 }}>Popular Books</h2>
+
+
+
+
+
+
+
+
+
+
 
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
-          maxWidth: "none",
-          paddingBottom: 18,
+          paddingBottom: 10,
+
           scrollSnapType: "x mandatory",
         }}
       >
@@ -762,6 +862,10 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
                 color: "inherit",
                 textDecoration: "none",
                 scrollSnapAlign: "start",
+
+
+
+
               }}
             >
               {media.coverUrl ? (
@@ -774,10 +878,12 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
                     width: 190,
                     height: 285,
                     objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid var(--app-border)",
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
                     background: "#eee",
                     display: "block",
+
+
                   }}
                 />
               ) : (
@@ -785,13 +891,17 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
                   style={{
                     width: 190,
                     height: 285,
-                    border: "1px solid var(--app-border)",
-                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    borderRadius: 10,
                     background: "#eee",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 12,
+                    color: "#666",
+
+
+
                   }}
                 >
                   No cover
@@ -804,6 +914,7 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
                   marginTop: 8,
                   fontSize: 15,
                   lineHeight: 1.2,
+
                 }}
               >
                 {media.title}
@@ -817,6 +928,7 @@ function PopularBookScroller({ events }: { events: FeedEvent[] }) {
                     fontSize: 13,
                     color: "#666",
                     lineHeight: 1.2,
+
                   }}
                 >
                   {media.bookDetails.pageCount} pages
@@ -838,26 +950,34 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
   return (
     <section
       style={{
-        marginTop: 28,
-        marginBottom: 28,
-        padding: 22,
-        border: "1px solid var(--app-border, rgba(0,0,0,0.12))",
-        borderRadius: 18,
-        background: "var(--app-surface-strong, #f6dddd)",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.04)",
-        boxSizing: "border-box",
+        marginTop: 24,
+        background: "#fff",
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 20,
+
       }}
     >
-      <h2 style={{ margin: "0 0 18px", fontSize: 18, fontWeight: 900 }}>Popular Games</h2>
+      <h2 style={{ marginTop: 0, marginBottom: 16 }}>Popular Games</h2>
+
+
+
+
+
+
+
+
+
+
 
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: 18,
           overflowX: "auto",
           width: "100%",
-          maxWidth: "none",
-          paddingBottom: 18,
+          paddingBottom: 10,
+
           scrollSnapType: "x mandatory",
         }}
       >
@@ -875,6 +995,10 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
                 color: "inherit",
                 textDecoration: "none",
                 scrollSnapAlign: "start",
+
+
+
+
               }}
             >
               {media.coverUrl ? (
@@ -887,10 +1011,11 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
                     width: 190,
                     height: 285,
                     objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid var(--app-border)",
+                    borderRadius: 10,
+                    border: "1px solid #ddd",
                     background: "#eee",
                     display: "block",
+
                   }}
                 />
               ) : (
@@ -898,13 +1023,16 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
                   style={{
                     width: 190,
                     height: 285,
-                    border: "1px solid var(--app-border)",
-                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    borderRadius: 10,
                     background: "#eee",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 12,
+                    color: "#666",
+
+
                   }}
                 >
                   No cover
@@ -917,6 +1045,7 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
                   marginTop: 8,
                   fontSize: 15,
                   lineHeight: 1.2,
+
                 }}
               >
                 {media.title}
@@ -930,6 +1059,7 @@ function PopularGameScroller({ events }: { events: FeedEvent[] }) {
                     fontSize: 13,
                     color: "#666",
                     lineHeight: 1.2,
+
                   }}
                 >
                   {formatYear(media.releaseDate)}
@@ -964,12 +1094,18 @@ function ScopeButton({
       onClick={() => onClick(value)}
       disabled={disabled}
       style={{
-        padding: "8px 12px",
+        padding: "9px 14px",
         borderRadius: 8,
-        border: active ? "2px solid black" : "1px solid #ccc",
-        background: active ? "#f0f0f0" : "white",
-        fontWeight: active ? 700 : 400,
+        border: active ? "1px solid #ff7f7a" : "1px solid #ddd",
+        background: active ? "#ffd6d4" : "#fff",
+        color: "#111",
+        fontWeight: active ? 700 : 600,
+
+
+
         cursor: disabled ? "not-allowed" : "pointer",
+
+
       }}
     >
       {label}
@@ -1210,161 +1346,123 @@ export default function FeedPage() {
         boxSizing: "border-box",
         background: "#f7f8fa",
         minHeight: "100vh",
-
-
-
-
       }}
     >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       <section
         style={{
-          padding: "42px clamp(24px, 5vw, 72px) 34px",
-          background:
-            "linear-gradient(135deg, #ffffff 0%, #ffffff 58%, #fff4f3 100%)",
-          borderBottom: "3px solid #ff7f7a",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 24,
-          flexWrap: "wrap",
+          padding: "40px 48px 28px",
+          background: "#fff",
+          borderBottom: "2px solid #ff7f7a",
+
+
+
+
+
+
         }}
       >
-        <div>
-          <p
-            style={{
-              margin: "0 0 8px",
-              color: "#e75f5a",
-              fontSize: 13,
-              fontWeight: 900,
-              letterSpacing: "0.09em",
-              textTransform: "uppercase",
-            }}
-          >
-            Community Activity
-          </p>
+        <h1
 
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "clamp(38px, 5vw, 58px)",
-              lineHeight: 0.95,
-              fontWeight: 900,
-              color: "#111111",
-            }}
-          >
-            Feed
-          </h1>
 
-          {!authLoaded ? null : currentUser ? (
-            <p
-              style={{
-                color: "#555555",
-                margin: "14px 0 0",
-                fontSize: 15,
-                lineHeight: 1.45,
-              }}
-            >
-              Recent activity for{" "}
-              <strong>
-                {currentUser.displayName || currentUser.username} (@
-                {currentUser.username})
-              </strong>
-              .
-            </p>
-          ) : (
-            <p
-              style={{
-                color: "#555555",
-                margin: "14px 0 0",
-                fontSize: 15,
-                lineHeight: 1.45,
-              }}
-            >
-              Browse popular movies, TV shows, albums, books, and games.
-            </p>
-          )}
-        </div>
 
-        <button
-          type="button"
-          onClick={refreshFeed}
-          disabled={loading || !currentUser}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           style={{
-            padding: "11px 18px",
-            borderRadius: 10,
-            border: "none",
-            background:
-              loading || (scope !== "popular" && !currentUser)
-                ? "#ffd6d4"
-                : "#ff7f7a",
-            color:
-              loading || (scope !== "popular" && !currentUser)
-                ? "#9c6a68"
-                : "#ffffff",
-            marginLeft: 8,
-            cursor:
-              loading || (scope !== "popular" && !currentUser)
-                ? "not-allowed"
-                : "pointer",
-            fontWeight: 900,
-            fontSize: 13,
-            boxShadow:
-              loading || (scope !== "popular" && !currentUser)
-                ? "none"
-                : "0 6px 14px rgba(255, 127, 122, 0.35)",
+            margin: 0,
+            fontSize: 42,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           }}
         >
-          {loading ? "Loading..." : "Refresh"}
-        </button>
+          Feed
+        </h1>
+
+        {!authLoaded ? null : currentUser ? (
+          <p style={{ color: "#555", marginTop: 10 }}>
+            Recent activity for{" "}
+            <strong>
+              {currentUser.displayName || currentUser.username} (@
+              {currentUser.username})
+            </strong>
+            .
+          </p>
+        ) : (
+          <p style={{ color: "#555", marginTop: 10 }}>
+            Browse popular movies, shows, albums, books, and games.
+          </p>
+        )}
       </section>
 
       <div
@@ -1374,9 +1472,9 @@ export default function FeedPage() {
           alignItems: "center",
           marginBottom: 0,
           flexWrap: "wrap",
-          background: "#ff7f7a",
-          padding: "12px clamp(24px, 5vw, 72px)",
-          borderBottom: "1px solid #f26a66",
+          background: "#ffe2df",
+          padding: "16px 48px",
+          borderBottom: "1px solid #f0c9c6",
         }}
       >
         {currentUser ? (
@@ -1414,20 +1512,40 @@ export default function FeedPage() {
           onClick={changeScope}
           disabled={loading}
         />
+
+        <button
+          type="button"
+          onClick={refreshFeed}
+          disabled={loading || !currentUser}
+          style={{
+            padding: "9px 14px",
+            borderRadius: 8,
+            border: "1px solid #ddd",
+            background: "#fff",
+            marginLeft: 8,
+            cursor:
+              loading || (scope !== "popular" && !currentUser)
+                ? "not-allowed"
+                : "pointer",
+            fontWeight: 600,
+          }}
+        >
+          {loading ? "Loading..." : "Refresh"}
+        </button>
       </div>
 
       {result && scope !== "popular" ? (
         <pre
           style={{
             whiteSpace: "pre-wrap",
-            background: "#fff4f3",
-            padding: 16,
-            borderRadius: 14,
-            margin: "28px clamp(24px, 5vw, 72px) 0",
-            border: "1px solid #ffd6d4",
-            borderLeft: "6px solid #ff7f7a",
-            color: "#111111",
-            fontSize: 13,
+            background: "#fff",
+            padding: 14,
+            borderRadius: 8,
+            margin: "24px 48px 0",
+            border: "1px solid #ddd",
+
+
+
           }}
         >
           {result}
@@ -1437,42 +1555,42 @@ export default function FeedPage() {
       {!loading && events.length === 0 && !result && (
         <div
           style={{
-            margin: "34px clamp(24px, 5vw, 72px)",
-            padding: "34px 24px",
+            margin: "28px 48px",
+            padding: 24,
             textAlign: "center",
-            background: "#ffffff",
-            border: "1px solid #dedede",
-            borderRadius: 20,
-            boxShadow: "0 8px 22px rgba(0, 0, 0, 0.07)",
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 12,
+
           }}
         >
-          <h2
-            style={{
-              margin: "0 0 8px",
-              fontSize: 24,
-              fontWeight: 900,
-              color: "#111111",
-            }}
-          >
-            No activity yet
-          </h2>
+          <p style={{ margin: 0 }}>{getEmptyMessage(scope)}</p>
 
-          <p
-            style={{
-              margin: 0,
-              color: "#666666",
-              fontSize: 15,
-            }}
-          >
-            {getEmptyMessage(scope)}
-          </p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         </div>
       )}
 
       {scope === "popular" ? (
         <section
           style={{
-            padding: "34px clamp(24px, 5vw, 72px) 54px",
+            padding: "28px 48px 40px",
             background: "#f7f8fa",
           }}
         >
@@ -1487,8 +1605,8 @@ export default function FeedPage() {
         <div
           style={{
             display: "grid",
-            gap: 18,
-            padding: "34px clamp(24px, 5vw, 72px) 54px",
+            gap: 16,
+            padding: "28px 48px 40px",
             background: "#f7f8fa",
           }}
         >
@@ -1502,14 +1620,14 @@ export default function FeedPage() {
               <article
                 key={`${event.id}-${media.externalId || media.id}`}
                 style={{
-                  border: "1px solid #dedede",
-                  borderRadius: 22,
-                  padding: 22,
+                  border: "1px solid #ddd",
+                  borderRadius: 14,
+                  padding: 16,
                   display: "flex",
-                  gap: 22,
+                  gap: 18,
                   alignItems: "flex-start",
-                  background: "#ffffff",
-                  boxShadow: "0 8px 22px rgba(0, 0, 0, 0.08)",
+                  background: "#fff",
+
                 }}
               >
                 <a href={mediaHref} style={{ textDecoration: "none" }}>
@@ -1517,36 +1635,36 @@ export default function FeedPage() {
                 </a>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      marginBottom: 8,
-                      fontSize: 17,
-                      lineHeight: 1.4,
-                      color: "#111111",
-                    }}
-                  >
+                  <div style={{ marginBottom: 8, lineHeight: 1.4 }}>
+
+
+
+
+
+
+
                     <a
                       href={`/profiles/${user.username}`}
-                      style={{
-                        color: "#111111",
-                        textDecoration: "none",
-                        fontWeight: 900,
-                      }}
+                      style={{ color: "#111", textDecoration: "none" }}
+
+
+
+
                     >
                       <strong>
                         {user.displayName || user.username || "Unknown user"}
                       </strong>
                     </a>{" "}
-                    <span style={{ color: "#555555" }}>
-                      {formatEventType(event.eventType)}
-                    </span>{" "}
+                    {formatEventType(event.eventType)}{" "}
+
+
                     <a
                       href={mediaHref}
-                      style={{
-                        color: "#e75f5a",
-                        textDecoration: "none",
-                        fontWeight: 900,
-                      }}
+                      style={{ color: "#d95d59", textDecoration: "none" }}
+
+
+
+
                     >
                       <strong>{media.title}</strong>
                     </a>
@@ -1555,14 +1673,14 @@ export default function FeedPage() {
                   <MediaMeta media={media} />
 
                   {event.ratingValue !== null && (
-                    <p
-                      style={{
-                        marginTop: 14,
-                        marginBottom: 0,
-                        fontSize: 14,
-                        color: "#111111",
-                      }}
-                    >
+                    <p style={{ marginTop: 12, marginBottom: 0 }}>
+
+
+
+
+
+
+
                       Rating: <strong>{event.ratingValue}/10</strong>
                     </p>
                   )}
@@ -1570,14 +1688,14 @@ export default function FeedPage() {
                   {reviewText && (
                     <p
                       style={{
-                        marginTop: 14,
+                        marginTop: 12,
                         whiteSpace: "pre-wrap",
-                        lineHeight: 1.5,
-                        color: "#333333",
-                        background: "#f7f8fa",
-                        borderLeft: "5px solid #ff7f7a",
-                        borderRadius: 10,
-                        padding: "13px 15px",
+                        lineHeight: 1.45,
+                        background: "#fafafa",
+                        padding: 12,
+                        borderRadius: 8,
+                        border: "1px solid #eee",
+
                       }}
                     >
                       {reviewText}
@@ -1586,40 +1704,40 @@ export default function FeedPage() {
 
                   <div
                     style={{
-                      marginTop: 14,
-                      color: "#777777",
+                      marginTop: 12,
+                      color: "#777",
                       fontSize: 13,
                     }}
                   >
                     {formatDate(event.createdAt)}
                   </div>
 
-                  <div
-                    style={{
-                      marginTop: 14,
-                      display: "flex",
-                      gap: 8,
-                      alignItems: "center",
-                      fontSize: 13,
-                      fontWeight: 900,
-                    }}
-                  >
+                  <div style={{ marginTop: 12 }}>
+
+
+
+
+
+
+
+
+
                     <a
                       href={mediaHref}
-                      style={{
-                        color: "#ff7f7a",
-                        textDecoration: "none",
-                      }}
+                      style={{ color: "#d95d59", textDecoration: "none" }}
+
+
+
                     >
                       View Media
                     </a>
-                    <span style={{ color: "#999999" }}>|</span>
+                    {" | "}
                     <a
                       href={`/profiles/${user.username}`}
-                      style={{
-                        color: "#ff7f7a",
-                        textDecoration: "none",
-                      }}
+                      style={{ color: "#d95d59", textDecoration: "none" }}
+
+
+
                     >
                       View Profile
                     </a>
