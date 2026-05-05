@@ -246,24 +246,39 @@ export default function ProfileFriendActions({
         style={{
           marginBottom: 10,
           display: "inline-block",
-          padding: "6px 10px",
-          border: "1px solid var(--app-border)",
+          padding: "7px 11px",
+          border: "1px solid #ffd6d4",
           borderRadius: 999,
-          background: "#f7f7f7",
+          background: "#fff2f1",
+          color: "#111",
           fontSize: 14,
-          fontWeight: 600,
+          fontWeight: 700,
         }}
       >
         {getStatusLabel(status)}
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
         {status === "NONE" && (
           <button
             type="button"
             onClick={sendRequest}
             disabled={loading}
-            style={{ padding: "8px 12px" }}
+            style={{
+              padding: "9px 12px",
+              borderRadius: 8,
+              border: "1px solid #ff7f7a",
+              background: "#ff7f7a",
+              color: "white",
+              fontWeight: 700,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? "Sending..." : "Add Friend"}
           </button>
@@ -274,7 +289,15 @@ export default function ProfileFriendActions({
             type="button"
             onClick={sendRequest}
             disabled={loading}
-            style={{ padding: "8px 12px" }}
+            style={{
+              padding: "9px 12px",
+              borderRadius: 8,
+              border: "1px solid #ff7f7a",
+              background: "#ff7f7a",
+              color: "white",
+              fontWeight: 700,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? "Sending..." : "Send Request Again"}
           </button>
@@ -285,7 +308,15 @@ export default function ProfileFriendActions({
             type="button"
             onClick={removeFriendship}
             disabled={loading}
-            style={{ padding: "8px 12px" }}
+            style={{
+              padding: "9px 12px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              background: "#fff",
+              color: "#111",
+              fontWeight: 700,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? "Canceling..." : "Cancel Request"}
           </button>
@@ -297,7 +328,15 @@ export default function ProfileFriendActions({
               type="button"
               onClick={() => updateFriendship("accept")}
               disabled={loading}
-              style={{ padding: "8px 12px" }}
+              style={{
+                padding: "9px 12px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
             >
               Accept
             </button>
@@ -306,7 +345,15 @@ export default function ProfileFriendActions({
               type="button"
               onClick={() => updateFriendship("decline")}
               disabled={loading}
-              style={{ padding: "8px 12px" }}
+              style={{
+                padding: "9px 12px",
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                background: "#fff",
+                color: "#111",
+                fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
             >
               Decline
             </button>
@@ -318,7 +365,15 @@ export default function ProfileFriendActions({
             type="button"
             onClick={removeFriendship}
             disabled={loading}
-            style={{ padding: "8px 12px" }}
+            style={{
+              padding: "9px 12px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              background: "#fff",
+              color: "#111",
+              fontWeight: 700,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? "Removing..." : "Remove Friend"}
           </button>
@@ -329,7 +384,16 @@ export default function ProfileFriendActions({
             type="button"
             onClick={() => updateFriendship("block")}
             disabled={loading || !currentFriendshipId}
-            style={{ padding: "8px 12px" }}
+            style={{
+              padding: "9px 12px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              background: "#fff",
+              color: "#111",
+              fontWeight: 700,
+              cursor:
+                loading || !currentFriendshipId ? "not-allowed" : "pointer",
+            }}
           >
             Block
           </button>
@@ -341,9 +405,11 @@ export default function ProfileFriendActions({
           style={{
             marginTop: 12,
             whiteSpace: "pre-wrap",
-            background: "#f6f6f6",
-            padding: 10,
+            background: "#fff",
+            padding: 12,
             borderRadius: 8,
+            border: "1px solid #ddd",
+            color: "#555",
           }}
         >
           {message}
