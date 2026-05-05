@@ -24,7 +24,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
         whiteSpace: "nowrap",
         fontSize: 15,
         padding: "9px 11px",
-
+        borderRadius: 8,
       }}
     >
       {label}
@@ -80,7 +80,7 @@ export default function NavBar() {
   return (
     <nav
       style={{
-        padding: "18px 48px",
+        padding: "16px 48px",
         borderBottom: "3px solid #ff7f7a",
         display: "grid",
         gridTemplateColumns: "auto minmax(280px, 560px) auto",
@@ -95,7 +95,7 @@ export default function NavBar() {
       <div
         style={{
           display: "flex",
-          gap: 10,
+          gap: 8,
           alignItems: "center",
           flexWrap: "wrap",
         }}
@@ -109,6 +109,9 @@ export default function NavBar() {
             fontSize: 24,
             marginRight: 10,
             padding: "8px 12px",
+            borderRadius: 10,
+            background: "#fff",
+            border: "1px solid #ffd6d4",
           }}
         >
           MediaApp
