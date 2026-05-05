@@ -41,28 +41,72 @@ export default function LogoutPage() {
   return (
     <main
       style={{
-        minHeight: "70vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 24,
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        boxSizing: "border-box",
+        background: "#f7f8fa",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 40,
       }}
     >
-      <div
+      <section
         style={{
           width: "100%",
-          maxWidth: 420,
-          border: "1px solid var(--app-border, #ddd)",
+          maxWidth: 460,
+          background: "#fff",
+          border: "1px solid #ddd",
           borderRadius: 18,
-          padding: 24,
-          background: "var(--app-surface-strong, rgba(255,255,255,0.9))",
+          padding: 34,
           textAlign: "center",
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 24 }}>Logging out...</h1>
-        <p style={{ marginTop: 10, marginBottom: 0, color: "#666" }}>
-          Clearing your session.
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            border: "4px solid #ffe2df",
+            borderTopColor: "#ff7f7a",
+            margin: "0 auto 18px",
+          }}
+        />
+
+        <p
+          style={{
+            margin: "0 0 8px",
+            color: "#d95d59",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            fontSize: 13,
+          }}
+        >
+          Signing out
         </p>
-      </div>
+
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 34,
+            lineHeight: 1.1,
+          }}
+        >
+          Logging out...
+        </h1>
+
+        <p
+          style={{
+            marginTop: 12,
+            marginBottom: 0,
+            color: "#555",
+            lineHeight: 1.5,
+          }}
+        >
+          Clearing your session and sending you back to the login page.
+        </p>
+      </section>
     </main>
   );
 }
