@@ -107,45 +107,183 @@ function MediaImportInner() {
   }, [provider, externalId, type, missingParams, router]);
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-10 text-white">
-      <div className="mx-auto max-w-xl rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
+    <main
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        boxSizing: "border-box",
+        background: "#f7f8fa",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 40,
+      }}
+    >
+      <section
+        style={{
+          width: "100%",
+          maxWidth: 560,
+          background: "#fff",
+          border: "1px solid #ddd",
+          borderRadius: 18,
+          padding: 32,
+        }}
+      >
         {state.status === "loading" ? (
           <>
-            <h1 className="text-2xl font-semibold">Opening media…</h1>
-            <p className="mt-3 text-neutral-400">{state.message}</p>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                border: "4px solid #ffe2df",
+                borderTopColor: "#ff7f7a",
+                marginBottom: 18,
+              }}
+            />
+
+            <p
+              style={{
+                margin: "0 0 8px",
+                color: "#d95d59",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                fontSize: 13,
+              }}
+            >
+              Importing
+            </p>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 34,
+                lineHeight: 1.1,
+              }}
+            >
+              Opening media…
+            </h1>
+
+            <p
+              style={{
+                marginTop: 12,
+                marginBottom: 0,
+                color: "#555",
+                lineHeight: 1.5,
+              }}
+            >
+              {state.message}
+            </p>
           </>
         ) : null}
 
         {state.status === "error" ? (
           <>
-            <h1 className="text-2xl font-semibold">Could not open this item</h1>
-            <p className="mt-3 text-neutral-400">{state.message}</p>
+            <p
+              style={{
+                margin: "0 0 8px",
+                color: "#d95d59",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                fontSize: 13,
+              }}
+            >
+              Import error
+            </p>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 34,
+                lineHeight: 1.1,
+              }}
+            >
+              Could not open this item
+            </h1>
+
+            <p
+              style={{
+                marginTop: 12,
+                color: "#555",
+                lineHeight: 1.5,
+              }}
+            >
+              {state.message}
+            </p>
+
             <a
               href="/search"
-              className="mt-6 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black"
+              style={{
+                display: "inline-block",
+                marginTop: 16,
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
             >
-              Back to search
+              Back to Search
             </a>
           </>
         ) : null}
 
         {state.status === "ready" ? (
           <>
-            <h1 className="text-2xl font-semibold">
+            <p
+              style={{
+                margin: "0 0 8px",
+                color: "#d95d59",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                fontSize: 13,
+              }}
+            >
+              Ready
+            </p>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 34,
+                lineHeight: 1.1,
+              }}
+            >
               {state.title ? `Opening ${state.title}…` : "Opening media…"}
             </h1>
-            <p className="mt-3 text-neutral-400">
+
+            <p
+              style={{
+                marginTop: 12,
+                color: "#555",
+                lineHeight: 1.5,
+              }}
+            >
               Taking you to the media overview page.
             </p>
+
             <a
               href={`/media/${state.mediaId}`}
-              className="mt-6 inline-block rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black"
+              style={{
+                display: "inline-block",
+                marginTop: 16,
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
             >
-              Open now
+              Open Now
             </a>
           </>
         ) : null}
-      </div>
+      </section>
     </main>
   );
 }
@@ -154,11 +292,62 @@ export default function MediaImportPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-neutral-950 px-4 py-10 text-white">
-          <div className="mx-auto max-w-xl rounded-2xl border border-neutral-800 bg-neutral-900 p-6">
-            <h1 className="text-2xl font-semibold">Opening media…</h1>
-            <p className="mt-3 text-neutral-400">Loading item details.</p>
-          </div>
+        <main
+          style={{
+            width: "100%",
+            minHeight: "100vh",
+            margin: 0,
+            boxSizing: "border-box",
+            background: "#f7f8fa",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 40,
+          }}
+        >
+          <section
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              background: "#fff",
+              border: "1px solid #ddd",
+              borderRadius: 18,
+              padding: 32,
+            }}
+          >
+            <p
+              style={{
+                margin: "0 0 8px",
+                color: "#d95d59",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                fontSize: 13,
+              }}
+            >
+              Loading
+            </p>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 34,
+                lineHeight: 1.1,
+              }}
+            >
+              Opening media…
+            </h1>
+
+            <p
+              style={{
+                marginTop: 12,
+                marginBottom: 0,
+                color: "#555",
+                lineHeight: 1.5,
+              }}
+            >
+              Loading item details.
+            </p>
+          </section>
         </main>
       }
     >
