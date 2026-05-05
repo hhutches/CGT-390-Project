@@ -306,10 +306,10 @@ function ResultCover({ item }: { item: MediaResult }) {
         style={{
           width: 140,
           height: 210,
-          border: "1px solid var(--app-border)",
+          border: "1px solid #ddd",
           borderRadius: 10,
           overflow: "hidden",
-          background: "var(--app-surface-strong)",
+          background: "#fff",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
@@ -326,6 +326,8 @@ function ResultCover({ item }: { item: MediaResult }) {
             alignItems: "center",
             justifyContent: "center",
             lineHeight: 1.1,
+            background: "#fafafa",
+            borderBottom: "1px solid #eee",
           }}
         >
           {artist || "Unknown Artist"}
@@ -340,6 +342,7 @@ function ResultCover({ item }: { item: MediaResult }) {
             alignItems: "center",
             justifyContent: "center",
             fontSize: 12,
+            color: "#666",
             flexShrink: 0,
           }}
         >
@@ -392,7 +395,7 @@ function ResultCover({ item }: { item: MediaResult }) {
           height: 210,
           objectFit: "cover",
           borderRadius: 10,
-          border: "1px solid var(--app-border)",
+          border: "1px solid #ddd",
           background: "#eee",
           flexShrink: 0,
         }}
@@ -405,7 +408,7 @@ function ResultCover({ item }: { item: MediaResult }) {
       style={{
         width: 140,
         height: 210,
-        border: "1px solid var(--app-border)",
+        border: "1px solid #ddd",
         borderRadius: 10,
         background: "#eee",
         display: "flex",
@@ -462,7 +465,14 @@ function ResultMeta({ item }: { item: MediaResult }) {
   }
 
   return (
-    <p style={{ margin: "6px 0 0", color: "#555", lineHeight: 1.35 }}>
+    <p
+      style={{
+        margin: "6px 0 0",
+        color: "#555",
+        lineHeight: 1.35,
+        fontSize: 14,
+      }}
+    >
       {parts.join(" · ")}
     </p>
   );
@@ -928,381 +938,537 @@ export default function AddEntryPage() {
     }
   }
 
+  const inputStyle = {
+    display: "block",
+    width: "100%",
+    padding: 9,
+    marginTop: 6,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+    background: "#fff",
+  };
+
   return (
-    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
-      <h1>Add Entry / Advanced Search</h1>
+    <main
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        boxSizing: "border-box",
+        background: "#f7f8fa",
+      }}
+    >
+      <section
+        style={{
+          padding: "40px 48px 28px",
+          background: "#fff",
+          borderBottom: "2px solid #ff7f7a",
+        }}
+      >
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 42,
+          }}
+        >
+          Add Entry / Advanced Search
+        </h1>
 
-      <p style={{ color: "#555", maxWidth: 760 }}>
-        Search across movies, TV, books, albums, and games. You can browse and
-        import media without logging in. Log in only when you want to save a
-        rating, review, or entry.
-      </p>
-
-      {authLoaded && currentUser ? (
-        <p style={{ color: "#555" }}>
-          Saving entries as{" "}
-          <strong>
-            {currentUser.displayName || currentUser.username} (@
-            {currentUser.username})
-          </strong>
+        <p
+          style={{
+            color: "#555",
+            maxWidth: 760,
+            lineHeight: 1.5,
+            marginTop: 10,
+            marginBottom: 0,
+          }}
+        >
+          Search across movies, TV, books, albums, and games. You can browse and
+          import media without logging in. Log in only when you want to save a
+          rating, review, or entry.
         </p>
-      ) : null}
 
-      <section
-        style={{
-          marginBottom: 30,
-          border: "1px solid var(--app-border)",
-          borderRadius: 14,
-          padding: 18,
-          background: "var(--app-surface-strong)",
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Detailed Search</h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: 12,
-            marginBottom: 16,
-          }}
-        >
-          <label>
-            Media type
-            <select
-              value={mediaType}
-              onChange={(event) =>
-                setMediaTypeAndSource(event.target.value as MediaTypeFilter)
-              }
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            >
-              <option value="ALL">All local media</option>
-              <option value="MOVIE">Movies</option>
-              <option value="SHOW">TV Shows</option>
-              <option value="BOOK">Books</option>
-              <option value="ALBUM">Albums</option>
-              <option value="GAME">Games</option>
-            </select>
-          </label>
-
-          <label>
-            Source
-            <select
-              value={source}
-              onChange={(event) => setSourceAndReset(event.target.value as Source)}
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            >
-              <option value="local">Local DB</option>
-              <option value="tmdb">TMDB</option>
-              <option value="books">Google Books</option>
-              <option value="spotify">Spotify Albums</option>
-              <option value="rawg">RAWG Games</option>
-            </select>
-          </label>
-
-          {source === "tmdb" ? (
-            <label>
-              TMDB type
-              <select
-                value={tmdbType}
-                onChange={(event) =>
-                  setTmdbTypeAndReset(event.target.value as TmdbType)
-                }
-                style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-              >
-                <option value="movie">Movies</option>
-                <option value="tv">TV Shows</option>
-              </select>
-            </label>
-          ) : null}
-
-          <label>
-            Search by
-            <select
-              value={searchBy}
-              onChange={(event) => {
-                setSearchBy(event.target.value as SearchBy);
-                resetResults();
-              }}
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            >
-              {searchOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Sort
-            <select
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value as SortBy);
-                setResults((items) => applyClientFilters([...items]));
-              }}
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            >
-              <option value="relevance">Relevance</option>
-              <option value="popularity">Popularity</option>
-              <option value="rating">Rating</option>
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-            </select>
-          </label>
-
-          <label>
-            Year from
-            <input
-              value={yearFrom}
-              onChange={(event) => setYearFrom(event.target.value)}
-              placeholder="e.g. 1990"
-              inputMode="numeric"
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            />
-          </label>
-
-          <label>
-            Year to
-            <input
-              value={yearTo}
-              onChange={(event) => setYearTo(event.target.value)}
-              placeholder="e.g. 2026"
-              inputMode="numeric"
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            />
-          </label>
-
-          <label>
-            Min score
-            <input
-              value={minRating}
-              onChange={(event) => setMinRating(event.target.value)}
-              placeholder="rating/popularity"
-              inputMode="numeric"
-              style={{ display: "block", width: "100%", padding: 8, marginTop: 6 }}
-            />
-          </label>
-        </div>
-
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            searchMedia();
-          }}
-          style={{ display: "flex", gap: 10, alignItems: "center" }}
-        >
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={getPlaceholder({ source, tmdbType, searchBy })}
-            style={{
-              padding: 10,
-              width: 520,
-              maxWidth: "100%",
-              border: "1px solid var(--app-border)",
-              borderRadius: 999,
-            }}
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 999,
-              border: "1px solid #222",
-              background: "black",
-              color: "white",
-              fontWeight: 800,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
-            {loading ? "Loading..." : "Search"}
-          </button>
-        </form>
-      </section>
-
-      {results.length > 0 ? (
-        <section style={{ marginBottom: 30 }}>
-          <h2>Results</h2>
-
-          <div style={{ display: "grid", gap: 14 }}>
-            {results.map((item) => {
-              const selected = selectedMatches(
-                item,
-                selectedMedia,
-                selectedExternalKey
-              );
-              const description = getResultDescription(item);
-
-              return (
-                <button
-                  key={getResultKey(item)}
-                  type="button"
-                  onClick={() => selectMedia(item)}
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    border: selected ? "2px solid black" : "1px solid #ddd",
-                    borderRadius: 14,
-                    padding: 14,
-                    background: selected ? "#f1f1f1" : "white",
-                    display: "flex",
-                    gap: 16,
-                    cursor: loading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  <ResultCover item={item} />
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <strong style={{ fontSize: 18 }}>{item.title}</strong>
-
-                    <ResultMeta item={item} />
-
-                    {description ? (
-                      <p
-                        style={{
-                          margin: "10px 0 0",
-                          color: "#333",
-                          lineHeight: 1.4,
-                          maxHeight: 82,
-                          overflow: "hidden",
-                        }}
-                      >
-                        {description}
-                      </p>
-                    ) : null}
-
-                    {isExternalMedia(item) ? (
-                      <p style={{ margin: "10px 0 0", color: "#777", fontSize: 13 }}>
-                        Click to import/open from {getProviderLabel(item)}.
-                      </p>
-                    ) : (
-                      <p style={{ margin: "10px 0 0", color: "#777", fontSize: 13 }}>
-                        Local media item.
-                      </p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {selectedMedia ? (
-        <section
-          style={{
-            marginBottom: 24,
-            border: "1px solid var(--app-border)",
-            borderRadius: 14,
-            background: "#f7f7f7",
-            padding: 14,
-          }}
-        >
-          <p style={{ marginTop: 0 }}>
-            Selected media: <strong>{selectedMedia.title}</strong>
-          </p>
-
-          <Link href={`/media/${selectedMedia.id}`}>View Media Page</Link>
-        </section>
-      ) : null}
-
-      <section
-        style={{
-          border: "1px solid var(--app-border)",
-          borderRadius: 14,
-          padding: 18,
-          background: "var(--app-surface-strong)",
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Log / Review</h2>
-
-        {!currentUser ? (
-          <p style={{ color: "#777" }}>
-            You can search and import without logging in.{" "}
-            <Link href="/login">Log in</Link> to save an entry.
+        {authLoaded && currentUser ? (
+          <p style={{ color: "#555", marginTop: 10, marginBottom: 0 }}>
+            Saving entries as{" "}
+            <strong>
+              {currentUser.displayName || currentUser.username} (@
+              {currentUser.username})
+            </strong>
           </p>
         ) : null}
-
-        <form onSubmit={handleSubmit}>
-          <label>Status</label>
-          <br />
-          <select name="status" defaultValue="COMPLETED">
-            <option value="WISHLIST">Wishlist</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="PAUSED">Paused</option>
-            <option value="DROPPED">Dropped</option>
-          </select>
-
-          <br />
-          <br />
-
-          <label>Rating 1-10</label>
-          <br />
-          <input name="ratingValue" type="number" min="1" max="10" />
-
-          <br />
-          <br />
-
-          <label>Review</label>
-          <br />
-          <textarea
-            name="reviewText"
-            placeholder="Write your thoughts..."
-            style={{ width: 500, height: 100, maxWidth: "100%" }}
-          />
-
-          <br />
-          <br />
-
-          <button
-            type="submit"
-            disabled={!selectedMedia || loading || !currentUser}
-            style={{
-              padding: "9px 12px",
-              borderRadius: 8,
-              border: "1px solid #222",
-              background: !selectedMedia || !currentUser ? "#ccc" : "black",
-              color: !selectedMedia || !currentUser ? "#555" : "white",
-              fontWeight: 800,
-              cursor: !selectedMedia || !currentUser ? "not-allowed" : "pointer",
-            }}
-          >
-            Save Entry
-          </button>
-        </form>
       </section>
 
-      {result ? (
-        <pre
+      <div
+        style={{
+          padding: "28px 48px 40px",
+        }}
+      >
+        <section
           style={{
-            marginTop: 20,
-            whiteSpace: "pre-wrap",
-            background: "#f6f6f6",
-            padding: 12,
-            borderRadius: 8,
+            marginBottom: 28,
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+            background: "#fff",
           }}
         >
-          {result}
-        </pre>
-      ) : null}
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>Detailed Search</h2>
 
-      {selectedMedia ? (
-        <div style={{ marginTop: 20 }}>
-          <Link href={`/media/${selectedMedia.id}`}>Go to Media Page</Link>
-          {" | "}
-          {currentUser ? (
-            <Link href={`/profiles/${currentUser.username}`}>Go to My Profile</Link>
-          ) : (
-            <Link href="/login">Log In</Link>
-          )}
-        </div>
-      ) : null}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: 14,
+              marginBottom: 18,
+            }}
+          >
+            <label style={{ fontWeight: 600 }}>
+              Media type
+              <select
+                value={mediaType}
+                onChange={(event) =>
+                  setMediaTypeAndSource(event.target.value as MediaTypeFilter)
+                }
+                style={inputStyle}
+              >
+                <option value="ALL">All local media</option>
+                <option value="MOVIE">Movies</option>
+                <option value="SHOW">TV Shows</option>
+                <option value="BOOK">Books</option>
+                <option value="ALBUM">Albums</option>
+                <option value="GAME">Games</option>
+              </select>
+            </label>
+
+            <label style={{ fontWeight: 600 }}>
+              Source
+              <select
+                value={source}
+                onChange={(event) => setSourceAndReset(event.target.value as Source)}
+                style={inputStyle}
+              >
+                <option value="local">Local DB</option>
+                <option value="tmdb">TMDB</option>
+                <option value="books">Google Books</option>
+                <option value="spotify">Spotify Albums</option>
+                <option value="rawg">RAWG Games</option>
+              </select>
+            </label>
+
+            {source === "tmdb" ? (
+              <label style={{ fontWeight: 600 }}>
+                TMDB type
+                <select
+                  value={tmdbType}
+                  onChange={(event) =>
+                    setTmdbTypeAndReset(event.target.value as TmdbType)
+                  }
+                  style={inputStyle}
+                >
+                  <option value="movie">Movies</option>
+                  <option value="tv">TV Shows</option>
+                </select>
+              </label>
+            ) : null}
+
+            <label style={{ fontWeight: 600 }}>
+              Search by
+              <select
+                value={searchBy}
+                onChange={(event) => {
+                  setSearchBy(event.target.value as SearchBy);
+                  resetResults();
+                }}
+                style={inputStyle}
+              >
+                {searchOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ fontWeight: 600 }}>
+              Sort
+              <select
+                value={sortBy}
+                onChange={(event) => {
+                  setSortBy(event.target.value as SortBy);
+                  setResults((items) => applyClientFilters([...items]));
+                }}
+                style={inputStyle}
+              >
+                <option value="relevance">Relevance</option>
+                <option value="popularity">Popularity</option>
+                <option value="rating">Rating</option>
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+              </select>
+            </label>
+
+            <label style={{ fontWeight: 600 }}>
+              Year from
+              <input
+                value={yearFrom}
+                onChange={(event) => setYearFrom(event.target.value)}
+                placeholder="e.g. 1990"
+                inputMode="numeric"
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ fontWeight: 600 }}>
+              Year to
+              <input
+                value={yearTo}
+                onChange={(event) => setYearTo(event.target.value)}
+                placeholder="e.g. 2026"
+                inputMode="numeric"
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={{ fontWeight: 600 }}>
+              Min score
+              <input
+                value={minRating}
+                onChange={(event) => setMinRating(event.target.value)}
+                placeholder="rating/popularity"
+                inputMode="numeric"
+                style={inputStyle}
+              />
+            </label>
+          </div>
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              searchMedia();
+            }}
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={getPlaceholder({ source, tmdbType, searchBy })}
+              style={{
+                padding: "11px 13px",
+                width: 520,
+                maxWidth: "100%",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                background: "#fff",
+              }}
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: "11px 16px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: loading ? "#f0b7b3" : "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Loading..." : "Search"}
+            </button>
+          </form>
+        </section>
+
+        {results.length > 0 ? (
+          <section style={{ marginBottom: 28 }}>
+            <h2 style={{ marginTop: 0, marginBottom: 16 }}>Results</h2>
+
+            <div
+              style={{
+                display: "grid",
+                gap: 0,
+                border: "1px solid #ddd",
+                borderRadius: 14,
+                overflow: "hidden",
+                background: "#fff",
+              }}
+            >
+              {results.map((item) => {
+                const selected = selectedMatches(
+                  item,
+                  selectedMedia,
+                  selectedExternalKey
+                );
+                const description = getResultDescription(item);
+
+                return (
+                  <button
+                    key={getResultKey(item)}
+                    type="button"
+                    onClick={() => selectMedia(item)}
+                    disabled={loading}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      border: "none",
+                      borderBottom: "1px solid #ddd",
+                      padding: 16,
+                      background: selected ? "#fff2f1" : "#fff",
+                      display: "flex",
+                      gap: 16,
+                      cursor: loading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <ResultCover item={item} />
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <strong style={{ fontSize: 18 }}>{item.title}</strong>
+
+                      <ResultMeta item={item} />
+
+                      {description ? (
+                        <p
+                          style={{
+                            margin: "10px 0 0",
+                            color: "#333",
+                            lineHeight: 1.4,
+                            maxHeight: 82,
+                            overflow: "hidden",
+                          }}
+                        >
+                          {description}
+                        </p>
+                      ) : null}
+
+                      {isExternalMedia(item) ? (
+                        <p
+                          style={{
+                            margin: "10px 0 0",
+                            color: "#777",
+                            fontSize: 13,
+                          }}
+                        >
+                          Click to import/open from {getProviderLabel(item)}.
+                        </p>
+                      ) : (
+                        <p
+                          style={{
+                            margin: "10px 0 0",
+                            color: "#777",
+                            fontSize: 13,
+                          }}
+                        >
+                          Local media item.
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        {selectedMedia ? (
+          <section
+            style={{
+              marginBottom: 24,
+              border: "1px solid #ffd6d4",
+              borderRadius: 14,
+              background: "#fff2f1",
+              padding: 16,
+            }}
+          >
+            <p style={{ marginTop: 0 }}>
+              Selected media: <strong>{selectedMedia.title}</strong>
+            </p>
+
+            <Link
+              href={`/media/${selectedMedia.id}`}
+              style={{
+                color: "#d95d59",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              View Media Page
+            </Link>
+          </section>
+        ) : null}
+
+        <section
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+            background: "#fff",
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>Log / Review</h2>
+
+          {!currentUser ? (
+            <p style={{ color: "#777" }}>
+              You can search and import without logging in.{" "}
+              <Link
+                href="/login"
+                style={{
+                  color: "#d95d59",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Log in
+              </Link>{" "}
+              to save an entry.
+            </p>
+          ) : null}
+
+          <form onSubmit={handleSubmit}>
+            <label style={{ fontWeight: 600 }}>Status</label>
+            <br />
+            <select
+              name="status"
+              defaultValue="COMPLETED"
+              style={{
+                marginTop: 6,
+                padding: 9,
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                width: 240,
+                maxWidth: "100%",
+                background: "#fff",
+              }}
+            >
+              <option value="WISHLIST">Wishlist</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="PAUSED">Paused</option>
+              <option value="DROPPED">Dropped</option>
+            </select>
+
+            <br />
+            <br />
+
+            <label style={{ fontWeight: 600 }}>Rating 1-10</label>
+            <br />
+            <input
+              name="ratingValue"
+              type="number"
+              min="1"
+              max="10"
+              style={{
+                marginTop: 6,
+                padding: 9,
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                width: 120,
+                background: "#fff",
+              }}
+            />
+
+            <br />
+            <br />
+
+            <label style={{ fontWeight: 600 }}>Review</label>
+            <br />
+            <textarea
+              name="reviewText"
+              placeholder="Write your thoughts..."
+              style={{
+                width: 520,
+                height: 110,
+                maxWidth: "100%",
+                marginTop: 6,
+                padding: 10,
+                borderRadius: 8,
+                border: "1px solid #ddd",
+                resize: "vertical",
+                background: "#fff",
+              }}
+            />
+
+            <br />
+            <br />
+
+            <button
+              type="submit"
+              disabled={!selectedMedia || loading || !currentUser}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: !selectedMedia || !currentUser ? "#ddd" : "#ff7f7a",
+                color: !selectedMedia || !currentUser ? "#666" : "white",
+                fontWeight: 700,
+                cursor: !selectedMedia || !currentUser ? "not-allowed" : "pointer",
+              }}
+            >
+              Save Entry
+            </button>
+          </form>
+        </section>
+
+        {result ? (
+          <pre
+            style={{
+              marginTop: 20,
+              whiteSpace: "pre-wrap",
+              background: "#fff",
+              padding: 14,
+              borderRadius: 8,
+              border: "1px solid #ddd",
+            }}
+          >
+            {result}
+          </pre>
+        ) : null}
+
+        {selectedMedia ? (
+          <div style={{ marginTop: 20 }}>
+            <Link
+              href={`/media/${selectedMedia.id}`}
+              style={{
+                color: "#d95d59",
+                fontWeight: 700,
+                textDecoration: "none",
+              }}
+            >
+              Go to Media Page
+            </Link>
+            {" | "}
+            {currentUser ? (
+              <Link
+                href={`/profiles/${currentUser.username}`}
+                style={{
+                  color: "#d95d59",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Go to My Profile
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                style={{
+                  color: "#d95d59",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                }}
+              >
+                Log In
+              </Link>
+            )}
+          </div>
+        ) : null}
+      </div>
     </main>
   );
 }
