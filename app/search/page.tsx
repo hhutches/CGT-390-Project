@@ -59,10 +59,10 @@ function ResultCover({ result }: { result: SearchResult }) {
         style={{
           width: 140,
           height: 210,
-          border: "1px solid var(--app-border)",
+          border: "1px solid #ddd",
           borderRadius: 10,
           overflow: "hidden",
-          background: "var(--app-surface-strong)",
+          background: "#fff",
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
@@ -80,6 +80,8 @@ function ResultCover({ result }: { result: SearchResult }) {
             justifyContent: "center",
             lineHeight: 1.15,
             color: "#444",
+            background: "#fafafa",
+            borderBottom: "1px solid #eee",
           }}
         >
           {result.subtitle.split(" · ")[0] || "Unknown Artist"}
@@ -145,7 +147,7 @@ function ResultCover({ result }: { result: SearchResult }) {
           height: 210,
           objectFit: "cover",
           borderRadius: 10,
-          border: "1px solid var(--app-border)",
+          border: "1px solid #ddd",
           background: "#eee",
           flexShrink: 0,
           display: "block",
@@ -159,7 +161,7 @@ function ResultCover({ result }: { result: SearchResult }) {
       style={{
         width: 140,
         height: 210,
-        border: "1px solid var(--app-border)",
+        border: "1px solid #ddd",
         borderRadius: 10,
         background: "#eee",
         display: "flex",
@@ -180,13 +182,14 @@ function SearchResultCard({ result }: { result: SearchResult }) {
     <a
       href={result.href}
       style={{
-        border: "1px solid var(--app-border)",
-        borderRadius: 14,
+        border: "none",
+        borderBottom: "1px solid #ddd",
+        borderRadius: 0,
         padding: 16,
         display: "flex",
         gap: 18,
         alignItems: "flex-start",
-        background: "var(--app-surface-strong)",
+        background: "#fff",
         color: "inherit",
         textDecoration: "none",
       }}
@@ -222,6 +225,7 @@ function SearchResultCard({ result }: { result: SearchResult }) {
             textTransform: "uppercase",
             fontSize: 13,
             letterSpacing: 0.3,
+            fontWeight: 600,
           }}
         >
           {getTypeLabel(result.type)} · {result.source}
@@ -230,12 +234,13 @@ function SearchResultCard({ result }: { result: SearchResult }) {
         <span
           style={{
             display: "inline-block",
-            padding: "7px 10px",
+            padding: "8px 11px",
             borderRadius: 8,
-            border: "1px solid #222",
+            border: "1px solid #ff7f7a",
             fontWeight: 700,
             fontSize: 14,
-            background: "var(--app-surface-strong)",
+            background: "#ffe2df",
+            color: "#111",
           }}
         >
           {getActionLabel(result)}
@@ -338,73 +343,157 @@ function SearchPageInner() {
   }, [initialQuery]);
 
   return (
-    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
-      <form
-        onSubmit={submitSearch}
+    <main
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        boxSizing: "border-box",
+        background: "#f7f8fa",
+      }}
+    >
+      <section
         style={{
-          display: "flex",
-          gap: 10,
-          alignItems: "end",
-          marginBottom: 28,
+          padding: "40px 48px 28px",
+          background: "#fff",
+          borderBottom: "2px solid #ff7f7a",
         }}
       >
-        <label style={{ flex: 1 }}>
-          <span style={{ display: "block", marginBottom: 6 }}>Search</span>
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 42,
+          }}
+        >
+          Search
+        </h1>
 
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search movies, shows, books, albums, games..."
+        <p
+          style={{
+            color: "#555",
+            marginTop: 10,
+            marginBottom: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          Search movies, shows, books, albums, games, and people.
+        </p>
+      </section>
+
+      <div
+        style={{
+          padding: "28px 48px 40px",
+        }}
+      >
+        <section
+          style={{
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+            marginBottom: 24,
+          }}
+        >
+          <form
+            onSubmit={submitSearch}
             style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: "12px 14px",
-              borderRadius: 10,
-              border: "1px solid var(--app-border)",
-              font: "inherit",
+              display: "flex",
+              gap: 10,
+              alignItems: "end",
+              flexWrap: "wrap",
             }}
-          />
-        </label>
+          >
+            <label
+              style={{
+                flex: 1,
+                minWidth: 260,
+                fontWeight: 600,
+              }}
+            >
+              Search
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search movies, shows, books, albums, games..."
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "11px 13px",
+                  borderRadius: 8,
+                  border: "1px solid #ddd",
+                  font: "inherit",
+                  marginTop: 6,
+                  background: "#fff",
+                }}
+              />
+            </label>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: "12px 16px",
-            borderRadius: 10,
-            border: "1px solid #222",
-            background: "black",
-            color: "white",
-            fontWeight: 700,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </form>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: "11px 16px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: loading ? "#f0b7b3" : "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Searching..." : "Search"}
+            </button>
+          </form>
+        </section>
 
-      {message && (
-        <pre
-          style={{
-            whiteSpace: "pre-wrap",
-            background: "#f6f6f6",
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 20,
-          }}
-        >
-          {message}
-        </pre>
-      )}
+        {message && (
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              background: "#fff",
+              padding: 14,
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              marginBottom: 20,
+            }}
+          >
+            {message}
+          </pre>
+        )}
 
-      {!loading && query.trim() && results.length === 0 && !message && (
-        <p>No results found.</p>
-      )}
+        {!loading && query.trim() && results.length === 0 && !message && (
+          <section
+            style={{
+              background: "#fff",
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 20,
+            }}
+          >
+            <p style={{ color: "#777", margin: 0 }}>No results found.</p>
+          </section>
+        )}
 
-      <div style={{ display: "grid", gap: 16 }}>
-        {results.map((result) => (
-          <SearchResultCard key={result.id} result={result} />
-        ))}
+        {results.length > 0 ? (
+          <section>
+            <h2 style={{ marginTop: 0, marginBottom: 16 }}>Results</h2>
+
+            <div
+              style={{
+                display: "grid",
+                gap: 0,
+                border: "1px solid #ddd",
+                borderRadius: 14,
+                overflow: "hidden",
+                background: "#fff",
+              }}
+            >
+              {results.map((result) => (
+                <SearchResultCard key={result.id} result={result} />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </main>
   );
@@ -412,7 +501,22 @@ function SearchPageInner() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<main style={{ padding: 40 }}>Loading search...</main>}>
+    <Suspense
+      fallback={
+        <main
+          style={{
+            width: "100%",
+            minHeight: "100vh",
+            margin: 0,
+            boxSizing: "border-box",
+            background: "#f7f8fa",
+            padding: 40,
+          }}
+        >
+          Loading search...
+        </main>
+      }
+    >
       <SearchPageInner />
     </Suspense>
   );
