@@ -75,36 +75,79 @@ function UserCard({
   return (
     <div
       style={{
-        border: "1px solid var(--app-border)",
-        borderRadius: 10,
-        padding: 14,
-        marginBottom: 10,
-        background: "var(--app-surface-strong)",
+        border: "1px solid #ddd",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 12,
+        background: "#fff",
         display: "flex",
         justifyContent: "space-between",
         gap: 16,
         alignItems: "center",
       }}
     >
-      <div>
-        <h3 style={{ margin: "0 0 4px" }}>
+      <div style={{ minWidth: 0 }}>
+        <h3
+          style={{
+            margin: "0 0 4px",
+            fontSize: 18,
+          }}
+        >
           {user.displayName || user.username}
-          <span style={{ fontWeight: "normal", color: "#555" }}>
+          <span
+            style={{
+              fontWeight: "normal",
+              color: "#555",
+              fontSize: 15,
+            }}
+          >
             {" "}
             @{user.username}
           </span>
         </h3>
 
         {user.bio && (
-          <p style={{ margin: 0, color: "#555", maxWidth: 520 }}>{user.bio}</p>
+          <p
+            style={{
+              margin: 0,
+              color: "#555",
+              maxWidth: 520,
+              lineHeight: 1.4,
+            }}
+          >
+            {user.bio}
+          </p>
         )}
 
         <div style={{ marginTop: 8 }}>
-          <a href={`/profiles/${user.username}`}>View Profile</a>
+          <a
+            href={`/profiles/${user.username}`}
+            style={{
+              color: "#d95d59",
+              fontWeight: 700,
+              textDecoration: "none",
+              fontSize: 14,
+            }}
+          >
+            View Profile
+          </a>
         </div>
       </div>
 
-      {children && <div>{children}</div>}
+      {children && (
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flexWrap: "wrap",
+            flexShrink: 0,
+          }}
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -446,19 +489,59 @@ export default function FriendsPage() {
 
   if (authLoaded && !currentUser) {
     return (
-      <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
-        <h1>Friends</h1>
-
-        <div
+      <main
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+          margin: 0,
+          boxSizing: "border-box",
+          background: "#f7f8fa",
+        }}
+      >
+        <section
           style={{
-            border: "1px solid #f0b4b4",
-            background: "#fff5f5",
-            padding: 14,
-            borderRadius: 10,
-            marginTop: 16,
+            padding: "40px 48px 28px",
+            background: "#fff",
+            borderBottom: "2px solid #ff7f7a",
           }}
         >
-          <p style={{ color: "#900", marginTop: 0 }}>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 42,
+            }}
+          >
+            Friends
+          </h1>
+
+          <p
+            style={{
+              color: "#555",
+              marginTop: 10,
+              lineHeight: 1.5,
+            }}
+          >
+            Log in or create an account to find friends and manage friend
+            requests.
+          </p>
+        </section>
+
+        <section
+          style={{
+            margin: "28px 48px",
+            padding: 24,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+          }}
+        >
+          <p
+            style={{
+              color: "#555",
+              marginTop: 0,
+              lineHeight: 1.5,
+            }}
+          >
             You are not logged in. Log in or create an account to find friends.
           </p>
 
@@ -466,14 +549,14 @@ export default function FriendsPage() {
             href="/login"
             style={{
               display: "inline-block",
-              padding: "8px 12px",
-              border: "1px solid #222",
+              padding: "10px 14px",
+              border: "1px solid #ff7f7a",
               borderRadius: 8,
               textDecoration: "none",
-              color: "black",
+              color: "white",
               fontWeight: 700,
               marginRight: 10,
-              background: "var(--app-surface-strong)",
+              background: "#ff7f7a",
             }}
           >
             Log In
@@ -483,162 +566,318 @@ export default function FriendsPage() {
             href="/signup"
             style={{
               display: "inline-block",
-              padding: "8px 12px",
-              border: "1px solid var(--app-border)",
+              padding: "10px 14px",
+              border: "1px solid #ffd6d4",
               borderRadius: 8,
               textDecoration: "none",
-              color: "black",
+              color: "#111",
               fontWeight: 700,
-              background: "var(--app-surface-strong)",
+              background: "#ffe2df",
             }}
           >
             Sign Up
           </a>
-        </div>
+        </section>
       </main>
     );
   }
 
   return (
-    <main style={{ padding: "36px clamp(20px, 4vw, 64px)", width: "100%", maxWidth: "none", margin: 0, boxSizing: "border-box" }}>
-      <h1>Friends</h1>
-
-      {!authLoaded ? (
-        <p style={{ color: "#555" }}>Checking login...</p>
-      ) : currentUser ? (
-        <p style={{ color: "#555" }}>
-          Managing friends as{" "}
-          <strong>
-            {currentUser.displayName || currentUser.username} (@
-            {currentUser.username})
-          </strong>
-        </p>
-      ) : null}
-
-      <p style={{ color: "#555" }}>
-        Search users, send friend requests, and manage incoming requests.
-      </p>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2>Find Users</h2>
-
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search username or display name..."
-          style={{ padding: 8, width: 320 }}
-          disabled={!currentUser}
-        />
-
-        <button
-          type="button"
-          onClick={searchUsers}
-          disabled={loading || !currentUser}
-          style={{ marginLeft: 10, padding: 8 }}
-        >
-          {loading ? "Loading..." : "Search"}
-        </button>
-
-        <div style={{ marginTop: 16 }}>
-          {searchResults.map((user) => {
-            const alreadyRelated = relatedUserIds.has(user.id);
-
-            return (
-              <UserCard key={user.id} user={user}>
-                <button
-                  type="button"
-                  onClick={() => sendRequest(user.id)}
-                  disabled={loading || alreadyRelated}
-                >
-                  {alreadyRelated ? "Already connected" : "Add Friend"}
-                </button>
-              </UserCard>
-            );
-          })}
-        </div>
-      </section>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2>Incoming Requests</h2>
-
-        {friendState.incomingRequests.length === 0 ? (
-          <p>No incoming requests.</p>
-        ) : (
-          friendState.incomingRequests.map((request) => (
-            <UserCard key={request.id} user={request.fromUser}>
-              <button
-                type="button"
-                onClick={() => updateRequest(request.id, "accept")}
-                disabled={loading}
-              >
-                Accept
-              </button>
-
-              <button
-                type="button"
-                onClick={() => updateRequest(request.id, "decline")}
-                disabled={loading}
-                style={{ marginLeft: 8 }}
-              >
-                Decline
-              </button>
-            </UserCard>
-          ))
-        )}
-      </section>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2>Outgoing Requests</h2>
-
-        {friendState.outgoingRequests.length === 0 ? (
-          <p>No outgoing requests.</p>
-        ) : (
-          friendState.outgoingRequests.map((request) => (
-            <UserCard key={request.id} user={request.toUser}>
-              <button
-                type="button"
-                onClick={() => removeFriendship(request.id)}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-            </UserCard>
-          ))
-        )}
-      </section>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2>Friends</h2>
-
-        {friendState.friends.length === 0 ? (
-          <p>No friends yet.</p>
-        ) : (
-          friendState.friends.map((friend) => (
-            <UserCard key={friend.id} user={friend.user}>
-              <button
-                type="button"
-                onClick={() => removeFriendship(friend.id)}
-                disabled={loading}
-              >
-                Remove
-              </button>
-            </UserCard>
-          ))
-        )}
-      </section>
-
-      {message && (
-        <pre
+    <main
+      style={{
+        width: "100%",
+        minHeight: "100vh",
+        margin: 0,
+        boxSizing: "border-box",
+        background: "#f7f8fa",
+      }}
+    >
+      <section
+        style={{
+          padding: "40px 48px 28px",
+          background: "#fff",
+          borderBottom: "2px solid #ff7f7a",
+        }}
+      >
+        <h1
           style={{
-            whiteSpace: "pre-wrap",
-            background: "#f6f6f6",
-            padding: 12,
-            borderRadius: 8,
+            margin: 0,
+            fontSize: 42,
           }}
         >
-          {message}
-        </pre>
-      )}
+          Friends
+        </h1>
+
+        {!authLoaded ? (
+          <p style={{ color: "#555", marginTop: 10 }}>Checking login...</p>
+        ) : currentUser ? (
+          <p
+            style={{
+              color: "#555",
+              marginTop: 10,
+              lineHeight: 1.5,
+            }}
+          >
+            Managing friends as{" "}
+            <strong>
+              {currentUser.displayName || currentUser.username} (@
+              {currentUser.username})
+            </strong>
+          </p>
+        ) : null}
+
+        <p
+          style={{
+            color: "#555",
+            marginBottom: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          Search users, send friend requests, and manage incoming requests.
+        </p>
+      </section>
+
+      <div
+        style={{
+          padding: "28px 48px 40px",
+        }}
+      >
+        <section
+          style={{
+            marginBottom: 28,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>Find Users</h2>
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              searchUsers();
+            }}
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search username or display name..."
+              style={{
+                padding: 10,
+                width: 340,
+                maxWidth: "100%",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                background: "#fff",
+              }}
+              disabled={!currentUser}
+            />
+
+            <button
+              type="submit"
+              disabled={loading || !currentUser}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #ff7f7a",
+                background: loading || !currentUser ? "#f0b7b3" : "#ff7f7a",
+                color: "white",
+                fontWeight: 700,
+                cursor: loading || !currentUser ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Loading..." : "Search"}
+            </button>
+          </form>
+
+          <div style={{ marginTop: 18 }}>
+            {searchResults.map((user) => {
+              const alreadyRelated = relatedUserIds.has(user.id);
+
+              return (
+                <UserCard key={user.id} user={user}>
+                  <button
+                    type="button"
+                    onClick={() => sendRequest(user.id)}
+                    disabled={loading || alreadyRelated}
+                    style={{
+                      padding: "9px 12px",
+                      borderRadius: 8,
+                      border: alreadyRelated
+                        ? "1px solid #ddd"
+                        : "1px solid #ff7f7a",
+                      background: alreadyRelated ? "#eee" : "#ff7f7a",
+                      color: alreadyRelated ? "#666" : "white",
+                      fontWeight: 700,
+                      cursor:
+                        loading || alreadyRelated ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {alreadyRelated ? "Already connected" : "Add Friend"}
+                  </button>
+                </UserCard>
+              );
+            })}
+          </div>
+        </section>
+
+        <section
+          style={{
+            marginBottom: 28,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>
+            Incoming Requests
+          </h2>
+
+          {friendState.incomingRequests.length === 0 ? (
+            <p style={{ color: "#777", marginBottom: 0 }}>
+              No incoming requests.
+            </p>
+          ) : (
+            friendState.incomingRequests.map((request) => (
+              <UserCard key={request.id} user={request.fromUser}>
+                <button
+                  type="button"
+                  onClick={() => updateRequest(request.id, "accept")}
+                  disabled={loading}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #ff7f7a",
+                    background: "#ff7f7a",
+                    color: "white",
+                    fontWeight: 700,
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Accept
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateRequest(request.id, "decline")}
+                  disabled={loading}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    background: "#fff",
+                    color: "#111",
+                    fontWeight: 700,
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Decline
+                </button>
+              </UserCard>
+            ))
+          )}
+        </section>
+
+        <section
+          style={{
+            marginBottom: 28,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>
+            Outgoing Requests
+          </h2>
+
+          {friendState.outgoingRequests.length === 0 ? (
+            <p style={{ color: "#777", marginBottom: 0 }}>
+              No outgoing requests.
+            </p>
+          ) : (
+            friendState.outgoingRequests.map((request) => (
+              <UserCard key={request.id} user={request.toUser}>
+                <button
+                  type="button"
+                  onClick={() => removeFriendship(request.id)}
+                  disabled={loading}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    background: "#fff",
+                    color: "#111",
+                    fontWeight: 700,
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </UserCard>
+            ))
+          )}
+        </section>
+
+        <section
+          style={{
+            marginBottom: 28,
+            background: "#fff",
+            border: "1px solid #ddd",
+            borderRadius: 14,
+            padding: 20,
+          }}
+        >
+          <h2 style={{ marginTop: 0, marginBottom: 16 }}>Friends</h2>
+
+          {friendState.friends.length === 0 ? (
+            <p style={{ color: "#777", marginBottom: 0 }}>No friends yet.</p>
+          ) : (
+            friendState.friends.map((friend) => (
+              <UserCard key={friend.id} user={friend.user}>
+                <button
+                  type="button"
+                  onClick={() => removeFriendship(friend.id)}
+                  disabled={loading}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: 8,
+                    border: "1px solid #ddd",
+                    background: "#fff",
+                    color: "#111",
+                    fontWeight: 700,
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Remove
+                </button>
+              </UserCard>
+            ))
+          )}
+        </section>
+
+        {message && (
+          <pre
+            style={{
+              whiteSpace: "pre-wrap",
+              background: "#fff",
+              padding: 14,
+              borderRadius: 8,
+              border: "1px solid #ddd",
+            }}
+          >
+            {message}
+          </pre>
+        )}
+      </div>
     </main>
   );
 }
