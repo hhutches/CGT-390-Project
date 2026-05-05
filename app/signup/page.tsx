@@ -100,7 +100,8 @@ export default function SignupPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f7f8fa",
+        background:
+                "radial-gradient(circle at 15% 20%, rgba(255,255,255,0.28), transparent 28%), radial-gradient(circle at 85% 85%, rgba(255,255,255,0.32), transparent 30%)",
         boxSizing: "border-box",
       }}
     >
