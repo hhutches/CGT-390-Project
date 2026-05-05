@@ -161,13 +161,13 @@ export default function LoginPage() {
   return (
     <main
       style={{
-        minHeight: "calc(100vh - 70px)",
-        padding: 32,
+        minHeight: "100vh",
+        padding: 48,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--app-bg)",
-
+        background: "#f7f8fa",
+        boxSizing: "border-box",
       }}
     >
       <style>
@@ -189,18 +189,17 @@ export default function LoginPage() {
           maxWidth: 980,
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr) 420px",
-          border: "1px solid var(--app-border)",
-          borderRadius: 28,
+          border: "1px solid #ddd",
+          borderRadius: 18,
           overflow: "hidden",
-          background: "var(--app-surface-strong)",
-          boxShadow: "0 24px 70px rgba(0,0,0,0.10)",
+          background: "#fff",
         }}
       >
         <div
           style={{
-            padding: 42,
+            padding: 40,
             background:
-              "linear-gradient(135deg, #050505 0%, #222 42%, #6b4eff 100%)",
+              "linear-gradient(135deg, #ff7f7a 0%, #d95d59 45%, #ffe2df 100%)",
             color: "white",
             minHeight: 480,
             display: "flex",
@@ -208,6 +207,7 @@ export default function LoginPage() {
             justifyContent: "space-between",
             position: "relative",
             overflow: "hidden",
+            borderRight: "1px solid #f0c9c6",
           }}
         >
           <div
@@ -215,32 +215,46 @@ export default function LoginPage() {
               position: "absolute",
               inset: 0,
               background:
-                "radial-gradient(circle at 15% 20%, rgba(255,255,255,0.12), transparent 28%), radial-gradient(circle at 85% 85%, rgba(255,255,255,0.16), transparent 30%)",
+                "radial-gradient(circle at 15% 20%, rgba(255,255,255,0.28), transparent 28%), radial-gradient(circle at 85% 85%, rgba(255,255,255,0.32), transparent 30%)",
               pointerEvents: "none",
             }}
           />
 
+          <div
+            style={{
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <p
+              style={{
+                margin: "0 0 10px",
+                color: "rgba(255,255,255,0.9)",
+                fontWeight: 700,
+                fontSize: 14,
+                textTransform: "uppercase",
+              }}
+            >
+              Welcome back
+            </p>
 
-
-          <div style={{ position: "relative", zIndex: 1 }}>
             <h1
               style={{
                 margin: 0,
                 fontSize: 46,
-                lineHeight: 1.02,
-                letterSpacing: "-0.045em",
+                lineHeight: 1.05,
               }}
             >
-              Welcome back.
+              Log in to your media tracker.
             </h1>
 
             <p
               style={{
                 marginTop: 18,
                 maxWidth: 440,
-                color: "rgba(255,255,255,0.78)",
+                color: "rgba(255,255,255,0.9)",
                 fontSize: 17,
-                lineHeight: 1.55,
+                lineHeight: 1.5,
               }}
             >
               Log in to rate, review, track your media, manage favorites, and
@@ -254,36 +268,34 @@ export default function LoginPage() {
               style={{
                 position: "relative",
                 zIndex: 1,
-                marginTop: 34,
+                marginTop: 32,
               }}
             >
-
-
-
-
-
-
-
-
-
+              <p
+                style={{
+                  margin: "0 0 10px",
+                  fontWeight: 700,
+                  color: "rgba(255,255,255,0.9)",
+                }}
+              >
+                Popular right now
+              </p>
 
               <div
                 style={{
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "rgba(255,255,255,0.08)",
-                  borderRadius: 22,
-                  padding: 13,
+                  border: "1px solid rgba(255,255,255,0.45)",
+                  background: "rgba(255,255,255,0.22)",
+                  borderRadius: 14,
+                  padding: 12,
                   overflow: "hidden",
-                  backdropFilter: "blur(14px)",
-                  boxShadow: "0 18px 40px rgba(0,0,0,0.20)",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
                     width: "max-content",
-                    gap: 12,
-                    animation: "loginTickerScroll 32s linear infinite",
+                    gap: 10,
+                    animation: "loginTickerScroll 34s linear infinite",
                   }}
                 >
                   {tickerItems.map((item, index) => (
@@ -291,14 +303,13 @@ export default function LoginPage() {
                       key={`${item.id}-${index}`}
                       title={item.title}
                       style={{
-                        width: item.type === "ALBUM" ? 96 : 84,
-                        height: item.type === "ALBUM" ? 96 : 126,
+                        width: item.type === "ALBUM" ? 86 : 76,
+                        height: item.type === "ALBUM" ? 86 : 114,
                         flex: "0 0 auto",
-                        border: "1px solid rgba(255,255,255,0.20)",
-                        background: "rgba(0,0,0,0.24)",
-                        borderRadius: 14,
+                        border: "1px solid rgba(255,255,255,0.45)",
+                        background: "rgba(255,255,255,0.25)",
+                        borderRadius: 10,
                         overflow: "hidden",
-                        boxShadow: "0 10px 22px rgba(0,0,0,0.22)",
                       }}
                     >
                       {item.imageUrl ? (
@@ -329,21 +340,26 @@ export default function LoginPage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-
+            background: "#fff",
           }}
         >
-          <div style={{ marginBottom: 26 }}>
+          <div style={{ marginBottom: 24 }}>
             <h2
               style={{
                 margin: 0,
                 fontSize: 30,
-                letterSpacing: "-0.035em",
               }}
             >
               Log in
             </h2>
 
-            <p style={{ marginTop: 8, color: "#666", lineHeight: 1.45 }}>
+            <p
+              style={{
+                marginTop: 8,
+                color: "#666",
+                lineHeight: 1.45,
+              }}
+            >
               Use your username or email to continue.
             </p>
           </div>
@@ -353,7 +369,7 @@ export default function LoginPage() {
               htmlFor="identifier"
               style={{
                 display: "block",
-                fontWeight: 800,
+                fontWeight: 700,
                 marginBottom: 8,
               }}
             >
@@ -369,13 +385,13 @@ export default function LoginPage() {
               style={{
                 width: "100%",
                 boxSizing: "border-box",
-                padding: "13px 14px",
-                border: "1px solid var(--app-border)",
-                borderRadius: 14,
+                padding: "12px 13px",
+                border: "1px solid #ddd",
+                borderRadius: 8,
                 fontSize: 15,
                 outline: "none",
                 marginBottom: 16,
-                background: "#fafafa",
+                background: "#fff",
               }}
             />
 
@@ -383,7 +399,7 @@ export default function LoginPage() {
               htmlFor="password"
               style={{
                 display: "block",
-                fontWeight: 800,
+                fontWeight: 700,
                 marginBottom: 8,
               }}
             >
@@ -400,13 +416,13 @@ export default function LoginPage() {
               style={{
                 width: "100%",
                 boxSizing: "border-box",
-                padding: "13px 14px",
-                border: "1px solid var(--app-border)",
-                borderRadius: 14,
+                padding: "12px 13px",
+                border: "1px solid #ddd",
+                borderRadius: 8,
                 fontSize: 15,
                 outline: "none",
                 marginBottom: 18,
-                background: "#fafafa",
+                background: "#fff",
               }}
             />
 
@@ -415,15 +431,14 @@ export default function LoginPage() {
               disabled={loading}
               style={{
                 width: "100%",
-                padding: "13px 14px",
-                border: "1px solid #111",
-                borderRadius: 14,
-                background: loading ? "#444" : "black",
+                padding: "12px 14px",
+                border: "1px solid #ff7f7a",
+                borderRadius: 8,
+                background: loading ? "#f0b7b3" : "#ff7f7a",
                 color: "white",
-                fontWeight: 900,
+                fontWeight: 700,
                 fontSize: 15,
                 cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: loading ? "none" : "0 12px 24px rgba(0,0,0,0.16)",
               }}
             >
               {loading ? "Logging in..." : "Log In"}
@@ -438,7 +453,7 @@ export default function LoginPage() {
                 background: "#fff5f5",
                 color: "#900",
                 padding: 12,
-                borderRadius: 14,
+                borderRadius: 8,
                 lineHeight: 1.4,
                 fontSize: 14,
               }}
@@ -459,8 +474,8 @@ export default function LoginPage() {
             <Link
               href="/signup"
               style={{
-                color: "black",
-                fontWeight: 900,
+                color: "#d95d59",
+                fontWeight: 700,
                 textDecoration: "none",
               }}
             >
