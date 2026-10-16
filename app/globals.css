@@ -95,3 +95,5 @@ button {
 .media-hero:has(.media-actions-panel) .media-description {
   -webkit-line-clamp: 3 !important;
 }
+
+@media(max-width:900px){.media-navbar{padding:12px 16px!important;grid-template-columns:1fr!important;gap:10px!important;position:relative!important}.media-navbar>div:first-child{overflow-x:auto;flex-wrap:nowrap!important}.media-navbar>div:last-child{position:absolute;top:15px;right:12px}.media-navbar>div:last-child a{font-size:11px!important;padding:9px!important}.media-navbar>div:first-child>a:first-child{font-size:18px!important;margin-right:130px!important}.media-navbar>div:first-child>a:not(:first-child){display:none}.media-navbar input{font-size:16px!important}}

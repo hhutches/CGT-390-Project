@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { databaseConnectionString } from '../lib/database-environment';
+const prod='postgresql://u:p@production.neon.tech/neondb';
+const preview='postgresql://u:p@preview.neon.tech/neondb';
+assert.throws(()=>databaseConnectionString({VERCEL_ENV:'preview',DATABASE_URL:prod}));
+assert.throws(()=>databaseConnectionString({VERCEL_ENV:'preview',DATABASE_URL:prod,PREVIEW_DATABASE_URL:prod}));
+assert.throws(()=>databaseConnectionString({VERCEL_ENV:'preview',DATABASE_URL:prod,PREVIEW_DATABASE_URL:'postgresql://different:role@production.neon.tech/neondb'}));
+assert.equal(databaseConnectionString({VERCEL_ENV:'preview',DATABASE_URL:prod,PREVIEW_DATABASE_URL:preview}),preview);
+assert.equal(databaseConnectionString({VERCEL_ENV:'production',DATABASE_URL:prod}),prod);
+console.log('Preview database isolation checks passed.');

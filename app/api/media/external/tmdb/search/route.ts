@@ -96,8 +96,9 @@ function getImageBase() {
 
 async function tmdbFetch<T>(path: string, params: Record<string, string>) {
   const token = process.env.TMDB_ACCESS_TOKEN;
+  const apiKey = process.env.TMDB_API_KEY;
 
-  if (!token) {
+  if (!token && !apiKey) {
     throw new Error("TMDB_ACCESS_TOKEN is missing.");
   }
 
@@ -107,9 +108,10 @@ async function tmdbFetch<T>(path: string, params: Record<string, string>) {
     url.searchParams.set(key, value);
   }
 
+  if (!token && apiKey) url.searchParams.set("api_key", apiKey);
   const response = await fetch(url.toString(), {
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       accept: "application/json",
     },
     cache: "no-store",
@@ -439,7 +441,7 @@ export async function GET(request: Request) {
       );
     }
 
-    if (!process.env.TMDB_ACCESS_TOKEN) {
+    if (!process.env.TMDB_ACCESS_TOKEN && !process.env.TMDB_API_KEY) {
       return NextResponse.json(
         { error: "TMDB_ACCESS_TOKEN is missing." },
         { status: 500 }

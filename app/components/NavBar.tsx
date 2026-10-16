@@ -78,7 +78,7 @@ export default function NavBar() {
   }
 
   return (
-    <nav
+    <nav className="media-navbar"
       style={{
         padding: "16px 48px",
         borderBottom: "3px solid #ff7f7a",
@@ -117,6 +117,7 @@ export default function NavBar() {
           MediaApp
         </Link>
 
+        <NavLink href="/discover" label="Discover" />
         <NavLink href="/" label="Home" />
         <NavLink href="/add-entry" label="Add Entry" />
         <NavLink href="/favorites" label="Favorites" />
@@ -246,3 +247,4 @@ export default function NavBar() {
     </nav>
   );
 }
+

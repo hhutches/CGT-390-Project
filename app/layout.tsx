@@ -1,20 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "./components/NavBar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Media App",
+  title: "Movie Mood · Media Logger",
   description: "Track and review movies, shows, and more",
 };
 
@@ -26,12 +15,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body
         style={{
           margin: 0,
-          fontFamily: "var(--font-geist-sans)",
+          fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
           background: "#fafafa",
         }}
       >
