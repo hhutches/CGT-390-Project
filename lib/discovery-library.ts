@@ -2,6 +2,7 @@ import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { discoveryTmdb } from '@/lib/discovery-tmdb';
 import { Prisma } from '@prisma/client';
+import { atlasMetadata } from './discovery-metadata';
 export const normalizeTitle=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 export async function ensureTmdbMovie(tmdbId:number){
  const externalId=String(tmdbId);const existing=await prisma.mediaExternalRef.findUnique({where:{provider_externalId:{provider:'TMDB',externalId}},include:{media:true}});
@@ -13,6 +14,6 @@ export async function ensureTmdbMovie(tmdbId:number){
 }
 export async function loadDiscoveryLibrary(userId:string){
  const entries=await prisma.userMediaEntry.findMany({where:{userId,media:{type:'MOVIE'}},include:{media:{include:{movieDetails:true,externalRefs:true,genres:{include:{genre:true}},credits:{include:{person:true}}}}},orderBy:{updatedAt:'desc'}});
- const movies=entries.map(e=>{const m=e.media,ref=m.externalRefs.find(r=>r.provider==='TMDB'),manual=m.externalRefs.find(r=>r.provider==='MANUAL'),raw=(ref?.rawPayload||manual?.rawPayload||{}) as Record<string,any>;return {id:ref?Number(ref.externalId):-m.id,mediaId:m.id,title:m.title,year:m.releaseDate?.getUTCFullYear()||Number(raw.year)||0,runtime:m.movieDetails?.runtimeMinutes||null,director:raw.credits?.crew?.filter((x:any)=>x.job==='Director').map((x:any)=>x.name).join(', ')||m.credits.filter(x=>x.creditRole==='Director').map(x=>x.person.fullName).join(', '),genre:raw.genres?.map((x:any)=>x.name).join(' / ')||m.genres.map(x=>x.genre.name).join(' / '),overview:m.description||'',poster:raw.poster_path||m.coverUrl?.split('/w500')[1]||null,tags:raw.keywords?.keywords?.map((x:any)=>x.name).join(' ')||'',source:ref?'tmdb':'pending',group:0,status:e.status,rating:e.ratingValue?e.ratingValue/2:null,review:e.reviewText||'',entryId:e.id};});
+ const movies=entries.map(e=>{const m=e.media,ref=m.externalRefs.find(r=>r.provider==='TMDB'),manual=m.externalRefs.find(r=>r.provider==='MANUAL'),raw=(ref?.rawPayload||manual?.rawPayload||{}) as Record<string,any>;return {id:ref?Number(ref.externalId):-m.id,mediaId:m.id,title:m.title,year:m.releaseDate?.getUTCFullYear()||Number(raw.year)||0,runtime:m.movieDetails?.runtimeMinutes||null,director:raw.credits?.crew?.filter((x:any)=>x.job==='Director').map((x:any)=>x.name).join(', ')||m.credits.filter(x=>x.creditRole==='Director').map(x=>x.person.fullName).join(', '),genre:raw.genres?.map((x:any)=>x.name).join(' / ')||m.genres.map(x=>x.genre.name).join(' / '),overview:m.description||'',poster:raw.poster_path||m.coverUrl?.split('/w500')[1]||null,tags:raw.keywords?.keywords?.map((x:any)=>x.name).join(' ')||'',source:ref?'tmdb':'pending',...atlasMetadata(raw),group:0,status:e.status,rating:e.ratingValue?e.ratingValue/2:null,review:e.reviewText||'',entryId:e.id};});
  return {movies,ratings:movies.filter(m=>m.status!=='WISHLIST').map(m=>({title:m.title,year:m.year,rating:m.rating,id:m.id,mediaId:m.mediaId})),watchlist:movies.filter(m=>m.status==='WISHLIST').map(m=>m.id)};
 }
