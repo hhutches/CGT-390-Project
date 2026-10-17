@@ -1,5 +1,5 @@
 import 'server-only';
-const allowed = [/^\/configuration$/, /^\/search\/(movie|keyword|person)$/, /^\/discover\/movie$/, /^\/movie\/\d+(\/(similar|recommendations))?$/, /^\/trending\/movie\/(day|week)$/, /^\/person\/\d+\/movie_credits$/];
+const allowed = [/^\/tv\/\d+$/,/^\/search\/tv$/,/^\/configuration$/, /^\/search\/(movie|keyword|person)$/, /^\/discover\/movie$/, /^\/movie\/\d+(\/(similar|recommendations))?$/, /^\/trending\/movie\/(day|week)$/, /^\/person\/\d+\/movie_credits$/];
 export function isAllowedTmdbPath(path: string) { return allowed.some(re => re.test(path)); }
 export function tmdbConfigured(){return Boolean(process.env.TMDB_ACCESS_TOKEN || process.env.TMDB_API_KEY);}
 export async function discoveryTmdb(path: string, params: Record<string,string> = {}) {

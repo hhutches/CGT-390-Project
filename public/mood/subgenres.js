@@ -1,20 +1,20 @@
-// Subgenres are learned from the visitor's films. Descriptors only name clusters after membership is computed.
+// Subgenres are learned from the visitor's works. Descriptors only name clusters after membership is computed.
 export const qualitativeAxes=[
- ['dreamlike','Dreamlike','style','Dreamlike surreal cinema: unstable reality, dreams, hallucinations, symbolic events and altered perception.'],
- ['contemplative','Contemplative','style','Slow contemplative cinema about memory, spiritual questions, stillness and reflection.'],
- ['claustrophobic','Claustrophobic','style','Claustrophobic cinema: confinement, enclosed spaces, isolation, trapped characters and mounting dread.'],
- ['melancholic','Melancholic','style','Melancholic films about grief, loneliness, regret, loss, alienation and longing.'],
- ['kinetic','Kinetic','style','Intense kinetic cinema with frantic momentum, sensory overload, nightlife, chaos and visceral tension.'],
+ ['dreamlike','Dreamlike','style','Dreamlike surreal stories and experiences: unstable reality, dreams, hallucinations, symbolic events and altered perception.'],
+ ['contemplative','Contemplative','style','Slow contemplative stories and experiences about memory, spiritual questions, stillness and reflection.'],
+ ['claustrophobic','Claustrophobic','style','Claustrophobic stories and experiences: confinement, enclosed spaces, isolation, trapped characters and mounting dread.'],
+ ['melancholic','Melancholic','style','Melancholic works about grief, loneliness, regret, loss, alienation and longing.'],
+ ['kinetic','Kinetic','style','Intense kinetic stories and experiences with frantic momentum, sensory overload, nightlife, chaos and visceral tension.'],
  ['humanist','Humanist','style','Warm compassionate humanist stories about ordinary people, friendship, resilience, work and community.'],
- ['nostalgic','Nostalgic','style','Nostalgic coming of age cinema about childhood, old friendships, adventures and remembered places.'],
+ ['nostalgic','Nostalgic','style','Nostalgic coming of age stories and experiences about childhood, old friendships, adventures and remembered places.'],
  ['absurdist','Absurdist','style','Absurdist dark comedy, surreal satire and strange bureaucratic social situations.'],
- ['neon','Neon-drenched','style','Stylized neon noir cinema, nocturnal streets, city lights, nightclubs and nocturnal urban danger.'],
- ['folk','Folkloric','style','Folk and supernatural cinema shaped by ritual, mythology, rural traditions and ancient beliefs.'],
- ['observational','Observational','style','Observational realist films studying everyday routines, architecture, labor and social life.'],
- ['romantic','Romantic','style','Intimate romantic films about desire, relationships, vulnerability and emotional connection.'],
- ['dystopian','Dystopian','style','Oppressive dystopian cinema about surveillance, control, alienation and dehumanizing social systems.'],
- ['transcendent','Transcendent','style','Spiritual cinematic journeys through nature, faith, cosmic wonder and profound existential questions.'],
- ['cities','cityscapes','domain','Urban cinema about cities, city streets, architecture, metropolitan life and alienation in modern spaces.'],
+ ['neon','Neon-drenched','style','Stylized neon noir stories and experiences, nocturnal streets, city lights, nightclubs and nocturnal urban danger.'],
+ ['folk','Folkloric','style','Folk and supernatural stories and experiences shaped by ritual, mythology, rural traditions and ancient beliefs.'],
+ ['observational','Observational','style','Observational realist works studying everyday routines, architecture, labor and social life.'],
+ ['romantic','Romantic','style','Intimate romantic works about desire, relationships, vulnerability and emotional connection.'],
+ ['dystopian','Dystopian','style','Oppressive dystopian stories and experiences about surveillance, control, alienation and dehumanizing social systems.'],
+ ['transcendent','Transcendent','style','Spiritual stories and experiencestic journeys through nature, faith, cosmic wonder and profound existential questions.'],
+ ['cities','cityscapes','domain','Urban stories and experiences about cities, city streets, architecture, metropolitan life and alienation in modern spaces.'],
  ['cosmos','cosmic frontiers','domain','Space journeys, alien worlds, the unknown universe, scientific discovery and cosmic mysteries.'],
  ['family','family fault lines','domain','Family relationships, mothers, fathers, children, home life and conflicts between generations.'],
  ['identity','fractured identities','domain','Identity, doubles, memory, unreliable perception, performance, dreams and the boundaries of the self.'],
@@ -33,16 +33,16 @@ const dot=(a,b)=>a.reduce((s,v,i)=>s+v*(b[i]||0),0);
 const normalize=v=>{const d=Math.hypot(...v)||1;return v.map(x=>x/d);};
 const mean=vs=>vs.length?vs[0].map((_,i)=>vs.reduce((s,v)=>s+v[i],0)/vs.length):[];
 const words=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean);
-export function qualitativeText(movie){const keywords=movie.keywords?.length?movie.keywords.join(', '):movie.tags||'';return `Synopsis: ${movie.overview||''}. Themes and descriptive keywords: ${keywords}. ${keywords}. Broad genres: ${movie.genre||''}.`;}
+export function qualitativeText(movie){const keywords=movie.keywords?.length?movie.keywords.join(', '):movie.tags||'';return `Synopsis: ${movie.overview||''}. Personal qualitative notes: ${movie.tasteNotes||''}. Themes and descriptive keywords: ${keywords}. ${keywords}. Broad genres: ${movie.genre||''}.`;}
 export function learnSubgenres(movies,embeddings,axisEmbeddings,{granularity='balanced'}={}){
- if(movies.length<3)throw Error('Add at least three matched films to analyze personal subgenres.');
- const valid=movies.filter(m=>Array.isArray(embeddings[m.id])&&embeddings[m.id].length>0);if(valid.length!==movies.length)throw Error('Some films still need semantic analysis.');
+ if(movies.length<3)throw Error('Add at least three matched works to analyze personal subgenres.');
+ const valid=movies.filter(m=>Array.isArray(embeddings[m.id])&&embeddings[m.id].length>0);if(valid.length!==movies.length)throw Error('Some works still need semantic analysis.');
  const semantic=movies.map(m=>normalize(embeddings[m.id]));const facets=semantic.map(v=>qualitativeAxes.map(([id])=>dot(v,axisEmbeddings[id]||[])));
  const baseline=mean(facets),deviation=baseline.map((_,j)=>Math.sqrt(facets.reduce((s,v)=>s+(v[j]-baseline[j])**2,0)/facets.length)||.01);
  // Text semantics dominate; relative qualitative axes make mood/aesthetic differences within THIS library visible.
  const vectors=semantic.map((v,i)=>normalize([...v.map(x=>x*.88),...normalize(facets[i].map((x,j)=>(x-baseline[j])/deviation[j])).map(x=>x*.32)]));
  // Build mutual semantic neighbors, then optimize local modularity in the FULL embedding space.
- // The projection never decides membership. Weakly connected films may remain unassigned.
+ // The projection never decides membership. Weakly connected works may remain unassigned.
  const n=vectors.length,k=Math.min(n-1,Math.max(2,Math.round(Math.sqrt(n))));
  const similarities=vectors.map(v=>vectors.map(w=>dot(v,w)));
  const neighbors=similarities.map((row,i)=>row.map((value,j)=>({j,value})).filter(x=>x.j!==i).sort((a,b)=>b.value-a.value).slice(0,k));
@@ -77,7 +77,7 @@ export function learnSubgenres(movies,embeddings,axisEmbeddings,{granularity='ba
   const counts=new Map();members.forEach(m=>new Set(m.keywords||[]).forEach(w=>counts.set(w,(counts.get(w)||0)+1)));const keywords=[...counts].map(([word,n])=>({word,count:n,weight:n/members.length*Math.log(1+movies.length/(keywordCounts.get(word)||1))})).sort((a,b)=>b.weight-a.weight).slice(0,8);
   const representatives=indices.map(i=>({id:movies[i].id,similarity:dot(semantic[i],centroid)})).sort((a,b)=>b.similarity-a.similarity).slice(0,3).map(r=>r.id);
   const signals=[chosenStyle,chosenDomain,...scores.filter(s=>s.key!==chosenStyle.key&&s.key!==chosenDomain.key).slice(0,3)].map(s=>({...s,supportIds:[...indices].sort((a,b)=>facets[b][qualitativeAxes.findIndex(x=>x[0]===s.key)]-facets[a][qualitativeAxes.findIndex(x=>x[0]===s.key)]).slice(0,3).map(i=>movies[i].id)}));
-  const explanation=`${chosenStyle.label} atmospheric cues connect these films with ${chosenDomain.label}. ${keywords.length?'Distinctive shared topics include '+keywords.slice(0,3).map(k=>k.word).join(', ')+'. ':''}This name describes a cluster learned from this collection, rather than an official TMDb genre.`;
+  const explanation=`${chosenStyle.label} atmospheric cues connect these works with ${chosenDomain.label}. ${keywords.length?'Distinctive shared topics include '+keywords.slice(0,3).map(k=>k.word).join(', ')+'. ':''}This name describes a cluster learned from this collection, rather than an official TMDb genre.`;
   return{id:'subgenre-'+index,label,name:label,memberIds:members.map(m=>m.id),representativeIds:representatives,centroid,cohesion:indices.reduce((s,i)=>s+dot(semantic[i],centroid),0)/indices.length,signals,keywords,explanation};
  });
  const memberships=movies.map((movie,i)=>{
@@ -89,9 +89,9 @@ export function learnSubgenres(movies,embeddings,axisEmbeddings,{granularity='ba
   const margin=best&&second?best.similarity-second.similarity:1;
   return{id:movie.id,primaryClusterId:primary?.id||null,status:best&&best.similarity>.4&&margin<.065?'bridge':!primary?'outlier':'core',margin,affinities:soft};
  });
- return{version:2,model:'MiniLM-L6-v2 · mutual semantic neighbors · modularity communities',granularity,clusters,memberships,projection:[],projectionMethod:null,createdAt:new Date().toISOString()};
+ return{version:3,model:'MiniLM-L6-v2 · mutual semantic neighbors · modularity communities',granularity,clusters,memberships,projection:[],projectionMethod:null,createdAt:new Date().toISOString()};
 }
-// A single shared UMAP plane includes core, bridge and unassigned films, without snapping to centers.
+// A single shared UMAP plane includes core, bridge and unassigned works, without snapping to centers.
 export async function projectSubgenres(profile,movies,embeddings,UMAP,onProgress=()=>{}){
  let seed=42;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const vectors=movies.map(m=>normalize(embeddings[m.id]));

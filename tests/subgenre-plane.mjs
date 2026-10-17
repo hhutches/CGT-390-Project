@@ -8,7 +8,7 @@ for(let group=0;group<3;group++)for(let i=0;i<8;i++){const id=group*8+i+1;movies
 movies.push({id:25,title:'Between worlds',overview:'Bridge'});embeddings[25]=Array.from({length:384},(_,j)=>j===0||j===1?.707:0);
 movies.push({id:26,title:'Different world',overview:'Unrelated film'});embeddings[26]=Array.from({length:384},(_,j)=>j===100?1:0);
 const profile=learnSubgenres(movies,embeddings,axes);
-assert.equal(profile.version,2);assert.ok(profile.clusters.length>=3);
+assert.equal(profile.version,3);assert.ok(profile.clusters.length>=3);
 const assigned=profile.clusters.flatMap(c=>c.memberIds);assert.equal(new Set(assigned).size,assigned.length);
 assert.equal(profile.memberships.length,movies.length);assert.equal(profile.memberships.find(m=>m.id===26).primaryClusterId,null);
 assert.equal(profile.memberships.find(m=>m.id===25).status,'bridge');

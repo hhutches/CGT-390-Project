@@ -1,3 +1,5 @@
+import {getCurrentUser} from '@/lib/auth';
+import {sameOrigin} from '@/lib/discovery-tmdb';
 import { prisma } from "@/lib/prisma";
 import { FriendshipStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -56,8 +58,9 @@ const friendshipInclude = {
 
 export async function GET(request: NextRequest) {
   try {
+    const currentUser=await getCurrentUser();if(!currentUser)return NextResponse.json({error:'Please sign in.'},{status:401});
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId")?.trim();
+    const userId = currentUser.id;
 
     if (!userId) {
       return NextResponse.json(
@@ -146,10 +149,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const currentUser=await getCurrentUser();if(!currentUser)return NextResponse.json({error:'Please sign in.'},{status:401});
+    if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
     const body = await request.json();
 
-    const userId = String(body.userId ?? "").trim();
+    const userId = currentUser.id;
     const targetUserId = String(body.targetUserId ?? "").trim();
+    if(targetUserId===userId)return NextResponse.json({error:"Choose another user."},{status:400});
 
     if (!userId || !targetUserId) {
       return NextResponse.json(
@@ -256,9 +262,11 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const currentUser=await getCurrentUser();if(!currentUser)return NextResponse.json({error:'Please sign in.'},{status:401});
+    if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
     const body = await request.json();
 
-    const userId = String(body.userId ?? "").trim();
+    const userId = currentUser.id;
     const friendshipId = Number(body.friendshipId);
     const action = String(body.action ?? "").trim();
 
@@ -380,9 +388,11 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const currentUser=await getCurrentUser();if(!currentUser)return NextResponse.json({error:'Please sign in.'},{status:401});
+    if(!sameOrigin(request))return NextResponse.json({error:'Invalid request origin.'},{status:403});
     const { searchParams } = new URL(request.url);
 
-    const userId = searchParams.get("userId")?.trim();
+    const userId = currentUser.id;
     const friendshipId = Number(searchParams.get("friendshipId"));
 
     if (!userId || !Number.isInteger(friendshipId)) {
