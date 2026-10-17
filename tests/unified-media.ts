@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import{atlasIdentity,meaningfulMetadata}from'../lib/media-atlas-model';
+import{movieKey}from'../public/mood/engine.js';
+import{mediaType,matchesMedium}from'../public/mood/unified.js';
+import{hierarchySegments,ringPath}from'../public/mood/hierarchy.js';
+assert.equal(atlasIdentity(3,'MOVIE','348'),348);
+assert.notEqual(atlasIdentity(3,'SHOW','348'),348,'TV/movie IDs cannot collide');
+assert.notEqual(atlasIdentity(3,'BOOK'),atlasIdentity(4,'GAME'));
+assert.notEqual(movieKey({title:'Dune',year:2021,mediaType:'BOOK'}),movieKey({title:'Dune',year:2021,mediaType:'MOVIE'}));
+assert.equal(movieKey({title:'Alien',year:1979}),movieKey({title:'Alien',year:1979,mediaType:'MOVIE'}));
+assert.equal(meaningfulMetadata('Album by Someone. First released 2020-01-01',[]),false);
+assert.equal(meaningfulMetadata('',[],'Ghostly voices and nocturnal city textures with intimate melancholy.'),true);
+assert.equal(meaningfulMetadata('',['memory','urban isolation']),true);
+const collection=[{id:1,mediaType:'MOVIE'},{id:-1000000003,mediaType:'BOOK'},{id:-1000000004,mediaType:'GAME'}];
+assert.equal(collection.filter(m=>matchesMedium(m,'BOOK')).length,1);assert.equal(collection.filter(m=>matchesMedium(m,'ALL')).length,3);
+const segments=hierarchySegments([{id:'a',memberIds:collection.map(m=>m.id)}],collection);assert.equal(segments[0].children.length,3);assert.equal(segments[0].children.reduce((n:number,c:{ids:number[]})=>n+c.ids.length,0),3);assert(!ringPath(0,0,1,2,0,Math.PI*2).includes('NaN'));
+const original=[{id:1,x:.1,y:.2},{id:-1000000003,x:.4,y:.5}];const filtered=original.filter(p=>matchesMedium(collection.find(m=>m.id===p.id),'BOOK'));assert.deepEqual(filtered[0],original[1],'Filtering must preserve semantic positions');
+console.log('PASS: cross-media identity, title deduplication, metadata eligibility, media filters, sunburst totals and fixed coordinates');

@@ -435,17 +435,20 @@ export async function POST(request: Request) {
       }
 
       const token = process.env.TMDB_ACCESS_TOKEN;
+      const apiKey = process.env.TMDB_API_KEY;
 
-      if (!token) {
+      if (!token && !apiKey) {
         return NextResponse.json(
           { error: "Missing TMDB_ACCESS_TOKEN." },
           { status: 500 }
         );
       }
 
-      const response = await fetch(getTmdbEndpoint(type, externalId), {
+      const movieUrl = new URL(getTmdbEndpoint(type, externalId));
+      if (!token && apiKey) movieUrl.searchParams.set("api_key", apiKey);
+      const response = await fetch(movieUrl, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
           accept: "application/json",
         },
         next: {

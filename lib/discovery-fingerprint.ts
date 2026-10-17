@@ -1,0 +1,2 @@
+import {createHash} from 'crypto';
+export function tasteFingerprint(movies:{id:number;overview?:string;tags?:string;rating?:number|null;status?:string;metadataComplete?:boolean;mediaType?:string;source?:string;tasteEligible?:boolean;tasteNotes?:string}[]){return createHash('sha256').update(JSON.stringify(movies.filter(m=>m.status!=='WISHLIST'&&m.source!=='pending'&&m.tasteEligible!==false).sort((a,b)=>a.id-b.id).map(m=>[m.id,m.mediaType,m.rating,m.overview,m.tags,m.tasteNotes,m.metadataComplete]))).digest('hex');}

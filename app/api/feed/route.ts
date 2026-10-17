@@ -121,9 +121,12 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    const friendIds=await getFriendIds(userId);
+    const blockedRows=await prisma.friendship.findMany({where:{status:'BLOCKED',OR:[{userAId:userId},{userBId:userId}]},select:{userAId:true,userBId:true}});
+    const blockedIds=blockedRows.map(f=>f.userAId===userId?f.userBId:f.userAId);
     const events = await prisma.userMediaLogEvent.findMany({
       take: FEED_LIMIT,
-      where: userFilter,
+      where:{AND:[userFilter,{entry:{is:{userId:{notIn:blockedIds},OR:[{userId},{visibility:'PUBLIC',user:{privacy:'PUBLIC'}},{userId:{in:friendIds},visibility:{in:['PUBLIC','FRIENDS']},user:{privacy:{in:['PUBLIC','FRIENDS']}}}]}}}]},
       orderBy: {
         createdAt: "desc",
       },

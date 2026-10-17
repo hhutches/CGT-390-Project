@@ -7,13 +7,7 @@ let lastCoverArtRequestAt = 0;
 function getMusicBrainzUserAgent() {
   const userAgent = process.env.MUSICBRAINZ_USER_AGENT;
 
-  if (!userAgent) {
-    throw new Error(
-      "Missing MUSICBRAINZ_USER_AGENT. Add MUSICBRAINZ_USER_AGENT to .env."
-    );
-  }
-
-  return userAgent;
+  return userAgent || "MediaAtlas/0.1 (https://github.com/hhutches/CGT-390-Project)";
 }
 
 async function waitForRateLimit(lastRequestAt: number) {

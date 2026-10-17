@@ -75,18 +75,11 @@ export async function GET(request: Request) {
 
   const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
 
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "GOOGLE_BOOKS_API_KEY is missing from .env." },
-      { status: 500 }
-    );
-  }
-
   const url = new URL("https://www.googleapis.com/books/v1/volumes");
   url.searchParams.set("q", getGoogleBooksQuery(q, searchBy));
   url.searchParams.set("maxResults", "10");
   url.searchParams.set("printType", "books");
-  url.searchParams.set("key", apiKey);
+  if(apiKey)url.searchParams.set("key", apiKey);
 
   const response = await fetch(url.toString(), {
     cache: "no-store",

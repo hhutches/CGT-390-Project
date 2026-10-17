@@ -654,6 +654,12 @@ export default async function ProfilePage({
   }
 
   const socialInfo = await getSocialInfo(profile.id, currentUser?.id ?? null);
+  if(socialInfo.status!=='SELF'){
+    if(socialInfo.status==='BLOCKED'||profile.privacy==='PRIVATE'||profile.privacy==='FRIENDS'&&socialInfo.status!=='FRIENDS')return <main style={{padding:40}}>This profile is private or limited to friends.</main>;
+    profile.entries=profile.entries.filter(e=>e.visibility==='PUBLIC'||socialInfo.status==='FRIENDS'&&e.visibility==='FRIENDS');
+    const visibleIds=new Set(profile.entries.map(e=>e.mediaId));profile.favorites=profile.favorites.filter(f=>visibleIds.has(f.mediaId));
+  }
+
 
   return (
     <main
@@ -840,3 +846,4 @@ export default async function ProfilePage({
     </main>
   );
 }
+
