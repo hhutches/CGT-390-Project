@@ -53,3 +53,9 @@ export const groups=[{name:'The unknowable',color:'#8e7cab',desc:'Cosmic questio
 export const catalog=rows.map(([id,title,year,director,runtime,genre,overview,tags,group,poster])=>({id,title,year,director,runtime,genre,overview,tags,group,poster:poster?'/'+poster:null,source:'starter'}));
 // Correct IDs independently of display order.
 catalog.find(m=>m.title==='Inland Empire').id=1730;
+
+// Verified TMDb title/year matches for the editorial examples.
+catalog.find(m=>m.title==='Jesus Camp').id=1776;
+catalog.find(m=>m.title==='Waitress').id=10758;
+catalog.find(m=>m.title==='Dancer in the Dark').id=16;
+catalog.find(m=>m.title==='Nostalghia').aliases=['Nostalgia'];
